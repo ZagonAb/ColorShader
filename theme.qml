@@ -246,6 +246,7 @@ FocusScope {
             }
         }
 
+        //GridView
         Rectangle{
             anchors {
                 horizontalCenter: parent.horizontalCenter
@@ -257,7 +258,7 @@ FocusScope {
             clip: true
             visible: gamesGridVisible
 
-            GridView {
+            /*GridView {
                 id: gameGrid
 
                 anchors {
@@ -428,6 +429,271 @@ FocusScope {
                                         anchors.fill: parent
                                         fillMode: VideoOutput.PreserveAspectCrop
                                         visible: true
+                                    }
+                                }
+                            }
+
+                            Image {
+                                id: logoOverlay
+                                anchors.centerIn: parent
+                                source: game ? game.assets.logo : ""
+                                width: parent.width * 0.6
+                                height: width
+                                opacity: selected ? 0 : 1
+                                fillMode: Image.PreserveAspectFit
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 500
+                                        easing.type: Easing.InOutQuad
+                                    }
+                                }
+                            }
+
+                            Text {
+                                id: fallbackText
+                                anchors.centerIn: parent
+                                text: game ? game.title : ""
+                                color: "white"
+                                font.pixelSize: parent.width * 0.1
+                                font.bold: true
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.Wrap
+                                width: parent.width * 0.9
+
+                                visible: {
+                                    return (!boxfront.source || boxfront.status === Image.Error) &&
+                                    (!logoOverlay.source || logoOverlay.status === Image.Error)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Component.onCompleted: {
+                    mediaPlayer.source = model.assets.video;
+                    mediaPlayer.pause();
+                }
+
+                onCurrentIndexChanged: {
+                    changeSound.play();
+                    var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
+                    gamescreenshot.source = selectedGame.assets.screenshot;
+                }
+
+                focus: gamesGridFocused
+
+                Keys.onLeftPressed: {
+                    if (currentIndex > 0) {
+                        currentIndex--;
+                        changeSound.play()
+                    }
+                }
+
+                Keys.onRightPressed: {
+                    if (currentIndex < count - 1) {
+                        currentIndex++;
+                        changeSound.play()
+                    }
+                }
+
+                Keys.onPressed: {
+                    if (!event.isAutoRepeat && api.keys.isCancel(event)) {
+                        event.accepted = true;
+                        mainMenuVisible = true;
+                        mainMenuFocused = true;
+                        gamesGridVisible = false;
+                        gamesGridFocused = false;
+                        backSound.play();
+                    }
+                }
+            }*/
+
+            GridView {
+                id: gameGrid
+
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                    bottom: parent.bottom
+                }
+
+                width: parent.width * 0.90
+                height: parent.height * 0.98
+
+                property int columns: 6
+                property int rows: 2
+
+                cellWidth: width / columns
+                cellHeight: height / rows
+
+                delegate: Item {
+                    id: delegateRoot
+                    width: gameGrid.cellWidth - gameGrid.cellWidth * 0.010
+                    height: gameGrid.cellHeight - gameGrid.cellHeight * 0.020
+                    property bool selected: GridView.isCurrentItem
+                    scale: selected && gameGrid.focus ? 1.05 : 1
+                    property var game
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 150
+                            easing.type: Easing.OutQuad
+                        }
+                    }
+
+                    z: selected ? 1 : 0
+
+                    Component.onCompleted: {
+                        updateGame();
+                    }
+
+                    function updateGame() {
+                        game = gameGrid.model.get(index);
+                    }
+
+
+                    function updateVideoState() {
+                        if (selected && gameGrid.activeFocus) {
+                            // Solo cargar el video cuando está seleccionado y con foco
+                            if (!mediaPlayer.source) {
+                                mediaPlayer.source = game.assets.video;
+                            }
+                            mediaPlayer.play();
+                            mediaPlayer.muted = false;
+                            videoOutput.visible = true;
+                        } else {
+                            mediaPlayer.stop();
+                            mediaPlayer.source = ""; // Limpiar fuente
+                            mediaPlayer.muted = true;
+                            videoOutput.visible = false;
+                        }
+                    }
+
+                    Connections {
+                        target: gameGrid
+                        onCurrentIndexChanged: {
+                            delegateRoot.updateGame();
+                            delegateRoot.updateVideoState();
+                        }
+                        onActiveFocusChanged: {
+                            delegateRoot.updateVideoState();
+                        }
+                    }
+
+                    Rectangle {
+                        id: backgroundRect
+                        anchors.fill: parent
+                        radius: 10
+                        color: "black"
+
+                        Item {
+                            anchors.fill: parent
+
+                            Rectangle {
+                                id: mask
+                                anchors.fill: parent
+                                radius: 10
+                                visible: false
+                            }
+
+                            Image {
+                                id: boxfront
+                                source: game ? game.assets.screenshot: ""
+
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                width: parent.width
+                                height: parent.height
+                                visible: false
+                                sourceSize { width: 640; height: 480 }
+                            }
+
+                            OpacityMask {
+                                anchors.fill: boxfront
+                                source: boxfront
+                                maskSource: mask
+                            }
+
+                            FastBlur {
+                                id: fastBlur
+                                anchors.fill: parent
+                                source: boxfront
+                                radius: selected ? 0 : 50
+                                opacity: selected ? 0 : 1
+                                visible: opacity > 0
+
+                                Behavior on radius {
+                                    NumberAnimation {
+                                        duration: 500
+                                        easing.type: Easing.InOutQuad
+                                    }
+                                }
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 500
+                                        easing.type: Easing.InOutQuad
+                                    }
+                                }
+
+                                layer.enabled: true
+                                layer.effect: OpacityMask {
+                                    maskSource: Rectangle {
+                                        width: backgroundRect.width
+                                        height: backgroundRect.height
+                                        radius: 10
+                                    }
+                                }
+                            }
+
+                            Item {
+                                id: videoContainer
+                                anchors.fill: parent
+
+                                Loader {
+                                    id: videoLoader
+                                    anchors.fill: parent
+                                    active: delegateRoot.selected && gameGrid.activeFocus
+                                    sourceComponent: Item {
+                                        Rectangle {
+                                            id: videoMask
+                                            anchors.fill: parent
+                                            radius: 10
+                                            visible: false
+                                        }
+
+                                        MediaPlayer {
+                                            id: mediaPlayer
+                                            source: game ? game.assets.video : ""
+                                            videoOutput: videoOutput
+                                            loops: MediaPlayer.Infinite
+                                            autoPlay: true  // Añadido para reproducción automática
+
+                                            onStatusChanged: {
+                                                if (status === MediaPlayer.Loaded) {
+                                                    play();  // Forzar reproducción al cargar
+                                                }
+                                                if (status === MediaPlayer.Error) {
+                                                    console.log("Video error:", errorString);
+                                                }
+                                            }
+                                        }
+
+                                        VideoOutput {
+                                            id: videoOutput
+                                            anchors.fill: parent
+                                            fillMode: VideoOutput.PreserveAspectCrop
+
+                                            layer.enabled: true
+                                            layer.effect: OpacityMask {
+                                                maskSource: Rectangle {
+                                                    width: backgroundRect.width
+                                                    height: backgroundRect.height
+                                                    radius: 10
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
