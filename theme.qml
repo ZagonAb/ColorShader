@@ -3,6 +3,7 @@ import QtQuick.Layouts 1.15
 import QtGraphicalEffects 1.12
 import SortFilterProxyModel 0.2
 import QtMultimedia 5.15
+import "qrc:/qmlutils" as PegasusUtils
 
 FocusScope {
     id: root
@@ -16,6 +17,7 @@ FocusScope {
     property string collectionDescription: ""
     property var colorMap: ({})
     property string currentColor: "#191919"
+    property var currentgame: null
 
     SoundEffect {
         id: changeSound
@@ -33,6 +35,69 @@ FocusScope {
         id: backSound
         source: "assets/sound/back.wav"
         volume: 1
+    }
+
+    function formatGameDescription(description) {
+        if (!description || description.trim() === "") {
+            return "No description available, use game scraper to get proper information..."
+        }
+
+        return description
+    }
+
+    function formatGameDeveloper(developer) {
+        if (!developer || developer.trim() === "") {
+            return "Unknown developer"
+        }
+
+        return developer
+    }
+
+    function getPlayersContent(players) {
+        if (players > 1) {
+            return {
+                count: players,
+                source: "assets/icons/players.png"
+            };
+        }
+    }
+
+    function getReleaseYearText(year) {
+        if (year === 0 || !year) {
+            return "Unknown release year";
+        }
+        return year.toString();
+    }
+
+    function formatGameGenre(genre) {
+        if (!genre || genre.trim() === "") {
+            return "Unknown genre"
+        }
+
+        const maxLength = 40
+        if (genre.length <= maxLength) {
+            return genre
+        } else {
+            return genre.substring(0, maxLength - 3) + "..."
+        }
+    }
+
+    function displayRating(rating) {
+        const fullStars = Math.floor(rating * 5);
+        const hasHalfStar = (rating * 5) % 1 !== 0;
+
+        let ratingDisplay = "";
+        for (let i = 0; i < fullStars; i++) {
+            ratingDisplay += "assets/icons/star1.png ";
+        }
+        if (hasHalfStar) {
+            ratingDisplay += "assets/icons/star05.png ";
+        }
+        for (let i = 0; i < 5 - fullStars - (hasHalfStar ? 1 : 0); i++) {
+            ratingDisplay += "assets/icons/star0.png ";
+        }
+
+        return ratingDisplay.trim();
     }
 
     function updateCurrentColor() {
@@ -515,6 +580,7 @@ FocusScope {
                     changeSound.play();
                     var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
                     gamescreenshot.source = selectedGame.assets.screenshot;
+                    currentgame = gameGrid.model.get(currentIndex);
                 }
 
                 focus: gamesGridFocused
@@ -611,7 +677,7 @@ FocusScope {
     Item {
         id: topBar
         width: parent.width
-        height: 60
+        height: root.height * 0.060
         anchors {
             top: parent.top
             topMargin: 20
@@ -633,7 +699,7 @@ FocusScope {
                 horizontalAlignment: Text.AlignLeft
                 width: contentWidth
                 anchors.verticalCenter: parent.verticalCenter
-                x: gamesGridVisible ? root.width * 0.82 : root.width * 0.015;
+                x: gamesGridVisible ? root.width * 0.80 : root.width * 0.015;
                 function formatTime() {
                     let date = new Date();
                     let hours = date.getHours();
@@ -653,6 +719,7 @@ FocusScope {
                 }
             }
             Item { width: parent.width - clock.width - batteryIcon.width - 20; height: 60 }
+
             Image {
                 id: batteryIcon
                 source: getBatteryIcon()
@@ -673,6 +740,178 @@ FocusScope {
                 }
             }
             Item { width: root.width * 0.010; height: 60 }
+        }
+    }
+
+    Item {
+        id: leftColumn
+        width: parent.width * 0.80
+        height: parent.height * 0.50
+        visible: gamesGridVisible
+        clip: true
+
+        Column {
+            anchors.fill: parent
+            anchors.leftMargin: root.width * 0.020
+            anchors.topMargin: root.height * 0.010
+            spacing: 20
+
+            Item {
+                width: root.width * 0.30
+                height: root.height * 0.20
+
+                Image {
+                    id: gameLogo
+                    anchors.fill: parent
+                    source: currentgame.assets.logo
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                    visible: status !== Image.Error
+                }
+
+                Image {
+                    id: fallbackImage
+                    anchors.fill: parent
+                    source: "assets/logos/default.png"
+                    fillMode: Image.PreserveAspectFit
+                    mipmap: true
+                    visible: gameLogo.status === Image.Error
+                }
+            }
+
+            Row {
+                spacing: 10
+
+                Rectangle {
+                    id: text_developer
+                    width: developer_text.width + 20
+                    height: developer_text.height + 6
+                    color: Qt.rgba(0, 0, 0, 0.5)
+                    border.color: "white"
+                    border.width: 2
+
+                    Text {
+                        id: developer_text
+                        text: formatGameDeveloper(currentgame.developer)
+                        color: "white"
+                        font.bold: true
+                        font.pixelSize: root.width * 0.012
+                        anchors.centerIn: parent
+                    }
+                }
+
+                Rectangle {
+                    width: releaseyear_text.width + 20
+                    height: releaseyear_text.height + 6
+                    color: Qt.rgba(0, 0, 0, 0.5)
+                    border.color: "white"
+                    border.width: 2
+
+                    Text {
+                        id: releaseyear_text
+                        text: getReleaseYearText(currentgame.releaseYear)
+                        color: "white"
+                        font.bold: true
+                        font.pixelSize: root.width * 0.012
+                        anchors.centerIn: parent
+                    }
+                }
+
+                Rectangle {
+                    width: genre_text.width + 20
+                    height: genre_text.height + 6
+                    color: Qt.rgba(0, 0, 0, 0.5)
+                    border.color: "white"
+                    border.width: 2
+
+                    Text {
+                        id: genre_text
+                        text: formatGameGenre(currentgame.genre)
+                        color: "white"
+                        font.bold: true
+                        font.pixelSize: root.width * 0.012
+                        anchors.centerIn: parent
+                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+                        elide: Text.ElideMiddle
+                    }
+                }
+
+                Rectangle {
+                    id: ratingContainer
+                    width: rating_content.width + 20
+                    height: text_developer.height
+                    color: Qt.rgba(0, 0, 0, 0.5)
+                    border.color: "white"
+                    border.width: 2
+
+                    Row {
+                        id: rating_content
+                        anchors.centerIn: parent
+                        spacing: 2
+
+                        Repeater {
+                            model: displayRating(currentgame.rating).split(" ").length
+                            Image {
+                                source: displayRating(currentgame.rating).split(" ")[index]
+                                width: root.width * 0.012
+                                height: width
+                                mipmap: true
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: players_content.width + 20
+                    height: text_developer.height
+                    color: Qt.rgba(0, 0, 0, 0.5)
+                    border.color: "white"
+                    border.width: 2
+                    visible: currentgame.players > 1
+
+                    Row {
+                        id: players_content
+                        anchors.centerIn: parent
+                        spacing: 2
+
+                        Repeater {
+                            model: {
+                                var playersContent = getPlayersContent(currentgame.players);
+                                return playersContent ? playersContent.count : 0;
+                            }
+
+                            Image {
+                                source: {
+                                    var playersContent = getPlayersContent(currentgame.players);
+                                    return playersContent ? playersContent.source : "";
+                                }
+                                width: root.width * 0.012
+                                height: width
+                                fillMode: Image.PreserveAspectFit
+                                mipmap: true
+                            }
+                        }
+                    }
+                }
+            }
+
+            PegasusUtils.AutoScroll {
+                id: autoscroll
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                }
+
+                height: parent.height * 0.4
+
+                Text {
+                    text: formatGameDescription(currentgame.description)
+                    width: parent.width * 0.6
+                    wrapMode: Text.Wrap
+                    font.pixelSize: root.width * 0.012
+                    color: "white"
+                }
+            }
         }
     }
 
