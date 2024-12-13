@@ -175,7 +175,7 @@ FocusScope {
             id: gradientLinear
             visible: gamesGridVisible
             width: parent.width
-            height: parent.height * 0.05
+            height: parent.height * 0.25
             anchors.bottom: gamescreenshot.bottom
             anchors.right: gamescreenshot.right
             start: Qt.point(0, height)
@@ -309,12 +309,14 @@ FocusScope {
             focus: mainMenuFocused
 
             Keys.onPressed: {
-                event.accepted = true;
-                mainMenuVisible = false;
-                mainMenuFocused = false;
-                gamesGridVisible = true;
-                gamesGridFocused = true;
-                goSound.play();
+                if (!event.isAutoRepeat && api.keys.isAccept(event)) {
+                    event.accepted = true;
+                    mainMenuVisible = false;
+                    mainMenuFocused = false;
+                    gamesGridVisible = true;
+                    gamesGridFocused = true;
+                    goSound.play();
+                }
             }
 
             Keys.onLeftPressed: {
@@ -417,6 +419,8 @@ FocusScope {
                             delegateRoot.updateVideoState();
                         }
                     }
+
+
 
                     Rectangle {
                         id: backgroundRect
@@ -572,8 +576,48 @@ FocusScope {
                                     (!logoOverlay.source || logoOverlay.status === Image.Error)
                                 }
                             }
+
+                            Rectangle {
+                                id: playGameButton
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.bottom: parent.bottom
+                                anchors.bottomMargin: parent.height * 0.05
+                                width: parent.width * 0.5
+                                height: parent.height * 0.2
+                                color: Qt.rgba(1, 1, 1, 0.5)
+                                radius: 20
+                                opacity: 0
+                                z: 1000
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 600
+                                        easing.type: Easing.InOutQuad
+                                    }
+                                }
+
+                                visible: {
+                                    return delegateRoot.selected ||
+                                    (videoLoader.item &&
+                                    videoLoader.item.mediaPlayer &&
+                                    videoLoader.item.mediaPlayer.status === MediaPlayer.Loaded)
+                                }
+
+                                onVisibleChanged: {
+                                    opacity = visible ? 1 : 0
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: "Play Game"
+                                    color: "white"
+                                    font.pixelSize: parent.height * 0.4
+                                    font.bold: true
+                                }
+                            }
                         }
                     }
+
                 }
 
                 onCurrentIndexChanged: {
@@ -643,7 +687,7 @@ FocusScope {
                 }
 
                 anchors.left: parent.left
-                anchors.leftMargin: root.width *0.080 //40
+                anchors.leftMargin: root.width *0.080
                 anchors.top: parent.top
                 anchors.topMargin: 20
             }
@@ -902,9 +946,10 @@ FocusScope {
                     right: parent.right
                 }
 
-                height: parent.height * 0.4
+                height: parent.height * 0.35
 
                 Text {
+                    id: descripText
                     text: formatGameDescription(currentgame.description)
                     width: parent.width * 0.6
                     wrapMode: Text.Wrap
