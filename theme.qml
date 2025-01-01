@@ -235,7 +235,7 @@ FocusScope {
 
                 opacity: selected ? 1.0 : 0.5
 
-                Image {
+                /*Image {
                     id: shortNameImage
                     source: "assets/systems/" + model.shortName + ".png"
                     width: parent.width
@@ -245,6 +245,62 @@ FocusScope {
                     scale: selected ? 1.2 : 1
                     mipmap: true
                     asynchronous: true
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: model.shortName
+                        color: "white"
+                        visible: shortNameImage.status !== Image.Ready
+                        font.pixelSize: root.width * 0.012
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 1000
+                            easing.type: Easing.InOutQuad
+                        }
+                    }
+
+                    SequentialAnimation {
+                        running: selected
+                        loops: Animation.Infinite
+                        PropertyAnimation {
+                            target: shortNameImage
+                            property: "y"
+                            from: -5
+                            to: 5
+                            duration: 500
+                            easing.type: Easing.InOutQuad
+                        }
+                        PropertyAnimation {
+                            target: shortNameImage
+                            property: "y"
+                            from: 5
+                            to: -5
+                            duration: 500
+                            easing.type: Easing.InOutQuad
+                        }
+                    }
+                }*/
+
+                Image {
+                    id: shortNameImage
+                    source: "assets/systems/" + model.shortName + ".png"
+                    width: parent.width
+                    height: parent.height
+                    fillMode: Image.PreserveAspectFit
+                    sourceSize { width: 640; height: 480 }
+                    scale: selected ? 1.2 : 1
+                    mipmap: true
+                    asynchronous: true
+
+                    onStatusChanged: {
+                        if (status === Image.Error) {
+                            source = "assets/systems/default.png";
+                        }
+                    }
 
                     Text {
                         anchors.centerIn: parent
