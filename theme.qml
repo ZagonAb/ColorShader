@@ -367,7 +367,9 @@ FocusScope {
                     width: gameGrid.cellWidth - gameGrid.cellWidth * 0.010
                     height: gameGrid.cellHeight - gameGrid.cellHeight * 0.020
                     property bool selected: GridView.isCurrentItem
+
                     scale: selected && gameGrid.focus ? 1.05 : 1
+
                     property var game
 
                     Behavior on scale {
@@ -388,12 +390,11 @@ FocusScope {
                     }
 
                     function updateVideoState() {
-                        if (videoLoader.item) {
-                            var player = videoLoader.item.mediaPlayer;
-                            var output = videoLoader.item.videoOutput;
+                        if (loader.item && loader.item.videoLoader.item) {
+                            var player = loader.item.videoLoader.item.mediaPlayer;
+                            var output = loader.item.videoLoader.item.videoOutput;
 
                             if (selected && gameGrid.activeFocus) {
-                                // Solo cargar el video cuando está seleccionado y con foco
                                 if (!player.source) {
                                     player.source = game.assets.video;
                                 }
@@ -402,7 +403,7 @@ FocusScope {
                                 output.visible = true;
                             } else {
                                 player.stop();
-                                player.source = ""; // Limpiar fuente
+                                player.source = "";
                                 player.muted = true;
                                 output.visible = false;
                             }
@@ -420,204 +421,207 @@ FocusScope {
                         }
                     }
 
-
-
-                    Rectangle {
-                        id: backgroundRect
+                    Loader {
+                        id: loader
                         anchors.fill: parent
-                        radius: 10
-                        color: "black"
-
-                        Item {
+                        active: gameGrid.activeFocus
+                        sourceComponent: Rectangle {
+                            id: backgroundRect
                             anchors.fill: parent
+                            radius: 10
+                            color: "black"
 
-                            Rectangle {
-                                id: mask
-                                anchors.fill: parent
-                                radius: 10
-                                visible: false
-                            }
-
-                            Image {
-                                id: boxfront
-                                source: game ? game.assets.screenshot: ""
-
-                                fillMode: Image.PreserveAspectCrop
-                                asynchronous: true
-                                width: parent.width
-                                height: parent.height
-                                visible: false
-                                sourceSize { width: 640; height: 480 }
-                            }
-
-                            OpacityMask {
-                                anchors.fill: boxfront
-                                source: boxfront
-                                maskSource: mask
-                            }
-
-                            FastBlur {
-                                id: fastBlur
-                                anchors.fill: parent
-                                source: boxfront
-                                radius: selected ? 0 : 50
-                                opacity: selected ? 0 : 1
-                                visible: opacity > 0
-
-                                Behavior on radius {
-                                    NumberAnimation {
-                                        duration: 500
-                                        easing.type: Easing.InOutQuad
-                                    }
-                                }
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: 500
-                                        easing.type: Easing.InOutQuad
-                                    }
-                                }
-
-                                layer.enabled: true
-                                layer.effect: OpacityMask {
-                                    maskSource: Rectangle {
-                                        width: backgroundRect.width
-                                        height: backgroundRect.height
-                                        radius: 10
-                                    }
-                                }
-                            }
+                            property alias videoLoader: videoLoader
 
                             Item {
-                                id: videoContainer
                                 anchors.fill: parent
 
-                                Loader {
-                                    id: videoLoader
+                                Rectangle {
+                                    id: mask
                                     anchors.fill: parent
-                                    active: delegateRoot.selected && gameGrid.activeFocus
-                                    sourceComponent: Item {
-                                        property alias mediaPlayer: mediaPlayer
-                                        property alias videoOutput: videoOutput
+                                    radius: 10
+                                    visible: false
+                                }
 
-                                        Rectangle {
-                                            id: videoMask
-                                            anchors.fill: parent
+                                Image {
+                                    id: boxfront
+                                    source: game ? game.assets.screenshot: ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    width: parent.width
+                                    height: parent.height
+                                    visible: false
+                                    sourceSize { width: 640; height: 480 }
+                                }
+
+                                OpacityMask {
+                                    anchors.fill: boxfront
+                                    source: boxfront
+                                    maskSource: mask
+                                }
+
+                                FastBlur {
+                                    id: fastBlur
+                                    anchors.fill: parent
+                                    source: boxfront
+                                    radius: selected ? 0 : 10
+                                    opacity: selected ? 0 : 1
+                                    visible: opacity > 0
+
+                                    Behavior on radius {
+                                        NumberAnimation {
+                                            duration: 500
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 500
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                    }
+
+                                    layer.enabled: true
+                                    layer.effect: OpacityMask {
+                                        maskSource: Rectangle {
+                                            width: backgroundRect.width
+                                            height: backgroundRect.height
                                             radius: 10
-                                            visible: false
                                         }
+                                    }
+                                }
 
-                                        MediaPlayer {
-                                            id: mediaPlayer
-                                            source: game ? game.assets.video : ""
-                                            videoOutput: videoOutput
-                                            loops: MediaPlayer.Infinite
-                                            autoPlay: true
+                                Item {
+                                    id: videoContainer
+                                    anchors.fill: parent
 
-                                            onStatusChanged: {
-                                                if (status === MediaPlayer.Loaded) {
-                                                    play();  // Forzar reproducción al cargar
+                                    Loader {
+                                        id: videoLoader
+                                        anchors.fill: parent
+                                        active: delegateRoot.selected && gameGrid.activeFocus
+                                        sourceComponent: Item {
+                                            property alias mediaPlayer: mediaPlayer
+                                            property alias videoOutput: videoOutput
+
+                                            Rectangle {
+                                                id: videoMask
+                                                anchors.fill: parent
+                                                radius: 10
+                                                visible: false
+                                            }
+
+                                            MediaPlayer {
+                                                id: mediaPlayer
+                                                source: game ? game.assets.video : ""
+                                                videoOutput: videoOutput
+                                                loops: MediaPlayer.Infinite
+                                                autoPlay: true
+
+                                                onStatusChanged: {
+                                                    if (status === MediaPlayer.Loaded) {
+                                                        play();
+                                                    }
+                                                    if (status === MediaPlayer.Error) {
+                                                        console.log("Video error:", errorString);
+                                                    }
                                                 }
-                                                if (status === MediaPlayer.Error) {
-                                                    console.log("Video error:", errorString);
+                                            }
+
+                                            VideoOutput {
+                                                id: videoOutput
+                                                anchors.fill: parent
+                                                fillMode: VideoOutput.PreserveAspectCrop
+
+                                                layer.enabled: true
+                                                layer.effect: OpacityMask {
+                                                    maskSource: Rectangle {
+                                                        width: backgroundRect.width
+                                                        height: backgroundRect.height
+                                                        radius: 10
+                                                    }
                                                 }
                                             }
                                         }
+                                    }
+                                }
 
-                                        VideoOutput {
-                                            id: videoOutput
-                                            anchors.fill: parent
-                                            fillMode: VideoOutput.PreserveAspectCrop
+                                Image {
+                                    id: logoOverlay
+                                    anchors.centerIn: parent
+                                    source: game ? game.assets.logo : ""
+                                    width: parent.width * 0.6
+                                    height: width
+                                    opacity: selected ? 0 : 1
+                                    fillMode: Image.PreserveAspectFit
 
-                                            layer.enabled: true
-                                            layer.effect: OpacityMask {
-                                                maskSource: Rectangle {
-                                                    width: backgroundRect.width
-                                                    height: backgroundRect.height
-                                                    radius: 10
-                                                }
-                                            }
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 500
+                                            easing.type: Easing.InOutQuad
                                         }
                                     }
-                                }
-                            }
-
-                            Image {
-                                id: logoOverlay
-                                anchors.centerIn: parent
-                                source: game ? game.assets.logo : ""
-                                width: parent.width * 0.6
-                                height: width
-                                opacity: selected ? 0 : 1
-                                fillMode: Image.PreserveAspectFit
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: 500
-                                        easing.type: Easing.InOutQuad
-                                    }
-                                }
-                            }
-
-                            Text {
-                                id: fallbackText
-                                anchors.centerIn: parent
-                                text: game ? game.title : ""
-                                color: "white"
-                                font.pixelSize: parent.width * 0.1
-                                font.bold: true
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                                wrapMode: Text.Wrap
-                                width: parent.width * 0.9
-
-                                visible: {
-                                    return (!boxfront.source || boxfront.status === Image.Error) &&
-                                    (!logoOverlay.source || logoOverlay.status === Image.Error)
-                                }
-                            }
-
-                            Rectangle {
-                                id: playGameButton
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.bottom: parent.bottom
-                                anchors.bottomMargin: parent.height * 0.05
-                                width: parent.width * 0.5
-                                height: parent.height * 0.2
-                                color: Qt.rgba(1, 1, 1, 0.5)
-                                radius: 20
-                                opacity: 0
-                                z: 1000
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: 600
-                                        easing.type: Easing.InOutQuad
-                                    }
-                                }
-
-                                visible: {
-                                    return delegateRoot.selected ||
-                                    (videoLoader.item &&
-                                    videoLoader.item.mediaPlayer &&
-                                    videoLoader.item.mediaPlayer.status === MediaPlayer.Loaded)
-                                }
-
-                                onVisibleChanged: {
-                                    opacity = visible ? 1 : 0
                                 }
 
                                 Text {
+                                    id: fallbackText
                                     anchors.centerIn: parent
-                                    text: "Play Game"
+                                    text: game ? game.title : ""
                                     color: "white"
-                                    font.pixelSize: parent.height * 0.4
+                                    font.pixelSize: parent.width * 0.1
                                     font.bold: true
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    wrapMode: Text.Wrap
+                                    width: parent.width * 0.9
+
+                                    visible: {
+                                        return (!boxfront.source || boxfront.status === Image.Error) &&
+                                        (!logoOverlay.source || logoOverlay.status === Image.Error)
+                                    }
+                                }
+
+                                Rectangle {
+                                    id: playGameButton
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottom: parent.bottom
+                                    anchors.bottomMargin: parent.height * 0.05
+                                    width: parent.width * 0.5
+                                    height: parent.height * 0.2
+                                    color: Qt.rgba(1, 1, 1, 0.5)
+                                    radius: 20
+                                    opacity: 0
+                                    z: 1000
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 600
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                    }
+
+                                    visible: {
+                                        return delegateRoot.selected ||
+                                        (videoLoader.item &&
+                                        videoLoader.item.mediaPlayer &&
+                                        videoLoader.item.mediaPlayer.status === MediaPlayer.Loaded)
+                                    }
+
+                                    onVisibleChanged: {
+                                        opacity = visible ? 1 : 0
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "Play Game"
+                                        color: "white"
+                                        font.pixelSize: parent.height * 0.4
+                                        font.bold: true
+                                    }
                                 }
                             }
                         }
                     }
-
                 }
 
                 onCurrentIndexChanged: {
