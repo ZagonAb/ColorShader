@@ -171,6 +171,14 @@ FocusScope {
             visible: gamesGridVisible
         }
 
+        FastBlur {
+            id: fastBlurEffect
+            source: gamescreenshot
+            anchors.fill: gamescreenshot
+            radius: 80
+            visible: gamesGridVisible
+        }
+
         LinearGradient {
             id: gradientLinear
             visible: gamesGridVisible
@@ -234,56 +242,6 @@ FocusScope {
                 }
 
                 opacity: selected ? 1.0 : 0.5
-
-                /*Image {
-                    id: shortNameImage
-                    source: "assets/systems/" + model.shortName + ".png"
-                    width: parent.width
-                    height: parent.height
-                    fillMode: Image.PreserveAspectFit
-                    sourceSize { width: 640; height: 480}
-                    scale: selected ? 1.2 : 1
-                    mipmap: true
-                    asynchronous: true
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: model.shortName
-                        color: "white"
-                        visible: shortNameImage.status !== Image.Ready
-                        font.pixelSize: root.width * 0.012
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    Behavior on scale {
-                        NumberAnimation {
-                            duration: 1000
-                            easing.type: Easing.InOutQuad
-                        }
-                    }
-
-                    SequentialAnimation {
-                        running: selected
-                        loops: Animation.Infinite
-                        PropertyAnimation {
-                            target: shortNameImage
-                            property: "y"
-                            from: -5
-                            to: 5
-                            duration: 500
-                            easing.type: Easing.InOutQuad
-                        }
-                        PropertyAnimation {
-                            target: shortNameImage
-                            property: "y"
-                            from: 5
-                            to: -5
-                            duration: 500
-                            easing.type: Easing.InOutQuad
-                        }
-                    }
-                }*/
 
                 Image {
                     id: shortNameImage
@@ -410,18 +368,18 @@ FocusScope {
                 }
 
                 width: parent.width * 0.90
-                height: parent.height * 0.98
+                height: parent.height * 0.98 // posibilidad de dejarlo entero
 
                 property int columns: 6
-                property int rows: 2
+                property int rows: 3
 
                 cellWidth: width / columns
                 cellHeight: height / rows
 
                 delegate: Item {
                     id: delegateRoot
-                    width: gameGrid.cellWidth - gameGrid.cellWidth * 0.010
-                    height: gameGrid.cellHeight - gameGrid.cellHeight * 0.020
+                    width: gameGrid.cellWidth - gameGrid.cellWidth * 0.030
+                    height: gameGrid.cellHeight - gameGrid.cellHeight * 0.050
                     property bool selected: GridView.isCurrentItem
 
                     scale: selected && gameGrid.focus ? 1.05 : 1
@@ -501,19 +459,24 @@ FocusScope {
 
                                 Image {
                                     id: boxfront
-                                    source: game ? game.assets.screenshot: ""
+                                    source: game ? game.assets.screenshot : ""
                                     fillMode: Image.PreserveAspectCrop
                                     asynchronous: true
                                     width: parent.width
                                     height: parent.height
-                                    visible: false
-                                    sourceSize { width: 640; height: 480 }
+                                    visible: !videoLoader.item || !videoLoader.item.videoOutput.visible
+                                    sourceSize { width: 256; height: 256 }
+                                    layer.enabled: true
+                                    layer.effect: OpacityMask {
+                                        maskSource: mask
+                                    }
                                 }
 
                                 OpacityMask {
                                     anchors.fill: boxfront
                                     source: boxfront
                                     maskSource: mask
+                                    visible: true
                                 }
 
                                 FastBlur {
@@ -522,7 +485,7 @@ FocusScope {
                                     source: boxfront
                                     radius: selected ? 0 : 10
                                     opacity: selected ? 0 : 1
-                                    visible: opacity > 0
+                                    visible: opacity > 0 && (!videoLoader.item || !videoLoader.item.videoOutput.visible)
 
                                     Behavior on radius {
                                         NumberAnimation {
@@ -540,11 +503,7 @@ FocusScope {
 
                                     layer.enabled: true
                                     layer.effect: OpacityMask {
-                                        maskSource: Rectangle {
-                                            width: backgroundRect.width
-                                            height: backgroundRect.height
-                                            radius: 10
-                                        }
+                                        maskSource: mask
                                     }
                                 }
 
@@ -571,12 +530,21 @@ FocusScope {
                                                 id: mediaPlayer
                                                 source: game ? game.assets.video : ""
                                                 videoOutput: videoOutput
-                                                loops: MediaPlayer.Infinite
+                                                loops: 1 // Reproduce el video solo una vez
                                                 autoPlay: true
 
                                                 onStatusChanged: {
                                                     if (status === MediaPlayer.Loaded) {
                                                         play();
+                                                    }
+                                                    if (status === MediaPlayer.EndOfMedia) {
+                                                        // Cuando el video termina, ocultar el VideoOutput
+                                                        videoOutput.visible = false;
+
+                                                        // Restaurar el efecto FastBlur y mostrar el logoOverlay
+                                                        fastBlur.radius = 10;
+                                                        fastBlur.opacity = 1;
+                                                        logoOverlay.opacity = 1;
                                                     }
                                                     if (status === MediaPlayer.Error) {
                                                         console.log("Video error:", errorString);
@@ -588,6 +556,7 @@ FocusScope {
                                                 id: videoOutput
                                                 anchors.fill: parent
                                                 fillMode: VideoOutput.PreserveAspectCrop
+                                                visible: delegateRoot.selected && gameGrid.activeFocus
 
                                                 layer.enabled: true
                                                 layer.effect: OpacityMask {
@@ -1039,272 +1008,271 @@ FocusScope {
 
         gameCount = api.collections.get(collectionsListView.currentIndex).games.count;
 
-
         collectionDescription = "Release Year: " + releaseYear + "\n" +
         "Games in your collection: " + gameCount + "\n" +
         "Description: " + description;
     }
 
     readonly property var colorMapping: {
-        "adam": "#786567",
-        "cps1": "#5d606e",
-        "fmtownsmarty": "#362e2f",
-        "openbor": "#866765",
-        "gba": "#7d7a61",
-        "gbh": "#738a8f",
-        "laser310": "#31c82c",
-        "bbcmicro": "#9e807d",
-        "pce-cd": "#34405e",
-        "ports": "#856d4f",
-        "atarijaguar": "#645661",
-        "st-v": "#917654",
-        "epic": "#375b66",
-        "type-x": "#6f3932",
-        "fba": "#97886a",
-        "megadrivejp": "#897155",
-        "zeldac": "#a5a077",
-        "zxnext": "#363e3c",
-        "consolearcade": "#97826e",
-        "msx2": "#9daac1",
-        "trs-80": "#c03e40",
-        "cdtv": "#c0866f",
-        "boom3": "#39281d",
-        "pv1000": "#374958",
-        "plus4": "#7f8185",
-        "atarijaguarcd": "#7b6a71",
-        "megadrive": "#a3a290",
-        "atarist": "#785456",
-        "gameandwatch": "#9d9c97",
-        "moto": "#a2987e",
-        "socrates": "#5a4b43",
-        "msx": "#44484e",
-        "daphne": "#813c61",
-        "gamepock": "#9c9c9c",
-        "snesmsu-1": "#828a89",
-        "vpinball": "#613623",
-        "megacdjp": "#d1b48f",
-        "atarilynx": "#98867f",
-        "atomiswave": "#582621",
-        "fbneo": "#5b4428",
-        "neogeocdjp": "#947f67",
-        "cavestory": "#7d6847",
-        "vic20": "#a8663b",
-        "ps2": "#767376",
-        "symbian": "#924817",
-        "atari5200": "#93908e",
-        "kodi": "#493e48",
-        "pcengine": "#b09077",
-        "namco2x6": "#635d5e",
-        "tg16": "#b09077",
-        "channelf": "#36bd3c",
-        "palm": "#7b633c",
-        "solarus": "#90959b",
-        "pyxel": "#7c92c9",
-        "flash": "#8b78a0",
-        "gbch": "#7a7d51",
-        "pc": "#8a7c67",
-        "windows9x": "#4f4744",
-        "dreamcast": "#6d6640",
-        "tg-cd": "#584b84",
-        "amiga600": "#767567",
-        "wii": "#7a8d75",
-        "pcarcade": "#2e3841",
-        "uzebox": "#a8915f",
-        "tic80": "#777b9c",
-        "supervision": "#7b5b6e",
-        "chailove": "#1a4e82",
-        "saturnjp": "#6d246b",
-        "now-playing": "#87787d",
-        "genh": "#7f98a2",
-        "nds": "#a1b0b5",
-        "snes": "#581517",
-        "c128": "#4f5257",
-        "custom-collections": "#978c85",
-        "sfc": "#a08c62",
-        "neogeo": "#b38774",
-        "mastersystem": "#7a725d",
-        "zmachine": "#5a6051",
-        "snesmsu1": "#828a89",
-        "lutro": "#887871",
-        "tyrquake": "#161413",
-        "sega32xjp": "#6c7582",
-        "amiga1200": "#897f72",
-        "naomi": "#956a79",
-        "sega32xna": "#5f4155",
-        "samcoupe": "#445678",
-        "windows": "#4f5b53",
-        "pcenginecd": "#34405e",
-        "supergb": "#a5c2c9",
-        "wonderswancolor": "#999f91",
-        "astrocade": "#ab807a",
-        "snesna": "#463843",
-        "moonlight": "#7c877a",
-        "ti99": "#828794",
-        "atarixe": "#a18e71",
-        "mame-advmame": "#868675",
-        "pokemon": "#443f42",
-        "androidgames": "#937854",
-        "gamecube": "#886f65",
-        "c20": "#a8663b",
-        "thomson": "#bf9768",
-        "scv": "#748d95",
-        "segacd": "#8a8a47",
-        "j2me": "#a57e64",
-        "snesh": "#b98976",
-        "ags": "#53432d",
-        "xbox360": "#6b462f",
-        "archimedes": "#88715a",
-        "scummvm": "#8f733f",
-        "supergrafx": "#333328",
-        "spectravideo": "#353b4a",
-        "vc4000": "#320302",
-        "nesh": "#1a4986",
-        "sufami": "#7c8082",
-        "megadrive-japan": "#897155",
-        "psp": "#928381",
-        "x68000": "#9b877f",
-        "xegs": "#a18e71",
-        "ngp": "#8b6c49",
-        "cps2": "#8a6a54",
-        "multivision": "#887d77",
-        "ps4": "#435155",
-        "megaduck": "#b16368",
-        "gbah": "#4c3c67",
-        "pygame": "#73a2c8",
-        "_default": "#765a58",
-        "msx1": "#6a6256",
-        "pspminis": "#533e3c",
-        "fmtowns": "#362e2f",
-        "fpinball": "#543b38",
-        "wonderswan": "#6d717b",
-        "to8": "#bf9768",
-        "pico8": "#9980a3",
-        "electron": "#6e3d1a",
-        "ngpc": "#828895",
-        "lowresnx": "#415678",
-        "easyrpg": "#778d85",
-        "emulators": "#698398",
-        "pcfx": "#4a3022",
-        "mame": "#d17340",
-        "prboom": "#895435",
-        "naomi2": "#8b665d",
-        "ps3": "#35392c",
-        "nesdisk": "#8d744e",
-        "coco": "#bf3e40",
-        "creativision": "#727487",
-        "quake": "#161413",
-        "gemrb": "#332218",
-        "vis": "#896859",
-        "sf": "#5d606e",
-        "windows3x": "#755e54",
-        "msx2+": "#44484e",
-        "saturn": "#866b6c",
-        "hbmame": "#786567",
-        "wasm4": "#9b6840",
-        "gamegear": "#98939e",
-        "gb2players": "#718784",
-        "laserdisc": "#7b6a71",
-        "triforce": "#98757b",
-        "pet": "#a1a5ac",
-        "desktop": "#404849",
-        "dos": "#856e62",
-        "3do": "#48703d",
-        "apfm1000": "#080807",
-        "gp32": "#c88799",
-        "wiiu": "#8c8a9b",
-        "sg-1000": "#5a3c27",
-        "pc88": "#74382f",
-        "apple2gs": "#594a40",
-        "crvision": "#7e6362",
-        "gbc": "#989d8f",
-        "mugen": "#434449",
-        "xbox": "#677272",
-        "cdi": "#83605e",
-        "amiga4000": "#897f72",
-        "nes": "#8f9696",
-        "tg16cd": "#584b84",
-        "gmaster": "#6d786c",
-        "vectrex": "#241e25",
-        "steam": "#2f302f",
-        "n64dd": "#947b83",
-        "amigacdtv": "#c0866f",
-        "sgb": "#a5c2c9",
-        "stv": "#917654",
-        "n3ds": "#4d3d3a",
-        "lcdgames": "#9f9b62",
-        "amiga500": "#767567",
-        "gba2players": "#728c59",
-        "famicom": "#a08f8f",
-        "lutris": "#72705f",
-        "camplynx": "#1f181c",
-        "model2": "#713b2c",
-        "videopac": "#894939",
-        "ngage": "#7d747a",
-        "segastv": "#917654",
-        "arcade": "#786567",
-        "fm7": "#8a6b65",
-        "3ds": "#4d3d3a",
-        "sega32x": "#5f4155",
-        "arcadia": "#a27b6a",
-        "psvita": "#59625b",
-        "c64": "#4f5257",
-        "gamate": "#4f414e",
-        "amiga": "#321d1a",
-        "atari2600": "#8fa03b",
-        "genesis": "#a3a290",
-        "cps": "#93727b",
-        "psx": "#5a4c2f",
-        "dragon32": "#727b7f",
-        "tutor": "#abaa6d",
-        "final_fantasy": "#607da8",
-        "macintosh": "#30433f",
-        "doom": "#895435",
-        "model3": "#76533a",
-        "completed": "#3d4b7a",
-        "msxturbor": "#7a5e55",
-        "amigacd32": "#74655a",
-        "tanodragon": "#826a3d",
-        "apple2": "#7e565b",
-        "arduboy": "#8a8a8a",
-        "gbc2players": "#54a539",
-        "megacd": "#898948",
-        "android": "#556239",
-        "tvgames": "#a67f52",
-        "pc98": "#6a5049",
-        "videopacplus": "#6e462a",
-        "zxspectrum": "#897659",
-        "atari800": "#527497",
-        "atom": "#d9c65c",
-        "pokemini": "#8f8c8f",
-        "thextech": "#5e6f53",
-        "actionmax": "#eff3f7",
-        "gx4000": "#4a4a4a",
-        "x1": "#97757d",
-        "stratagus": "#5d5754",
-        "supracan": "#84807b",
-        "mario": "#ae9f45",
-        "love": "#1a4e82",
-        "gamecom": "#392a2e",
-        "mess": "#a08877",
-        "odyssey2": "#6e462a",
-        "cgenius": "#856e62",
-        "atari7800": "#b57e36",
-        "amstradcpc": "#60454c",
-        "gb": "#9b9d84",
-        "n64": "#ada3a6",
-        "virtualboy": "#997e71",
-        "colecovision": "#5c5f71",
-        "cps3": "#9a3c2b",
-        "intellivision": "#7d716b",
-        "advision": "#a27b6a",
-        "neogeocd": "#947f67",
-        "naomigd": "#a17779",
-        "zx81": "#997156",
-        "oric": "#4c4b3a",
+        "3do": "#154234",
+        "3ds": "#3e2c22",
+        "actionmax": "#4c6d9a",
+        "adam": "#5f616e",
+        "advision": "#654d42",
+        "ags": "#4e351f",
+        "amiga": "#806e9f",
+        "amiga1200": "#4d462f",
+        "amiga4000": "#4d462f",
+        "amiga500": "#2b4737",
+        "amiga600": "#2b4737",
+        "amigacd32": "#7a3625",
+        "amigacdtv": "#ba6047",
+        "amstradcpc": "#313868",
+        "android": "#3d3d3c",
+        "androidgames": "#39331d",
+        "apfm1000": "#797970",
+        "apple2": "#7f89a2",
+        "apple2gs": "#5b3a30",
+        "arcade": "#5f616e",
+        "arcadia": "#654d42",
+        "archimedes": "#342218",
+        "arduboy": "#474747",
+        "astrocade": "#c67d67",
+        "atari2600": "#493618",
+        "atari5200": "#bebacb",
+        "atari7800": "#585d49",
+        "atari800": "#496db9",
+        "atarijaguar": "#362546",
+        "atarijaguarcd": "#445579",
+        "atarilynx": "#4b4a7b",
+        "atarist": "#98a3bd",
+        "atarixe": "#5474aa",
+        "atom": "#584e38",
+        "atomiswave": "#39373c",
+        "bbcmicro": "#543641",
+        "boom3": "#3f2e20",
+        "c128": "#353d44",
+        "c20": "#4b281d",
+        "c64": "#353d44",
+        "camplynx": "#3f2027",
+        "cavestory": "#48723a",
+        "cdi": "#37333e",
+        "cdtv": "#ba6047",
+        "cgenius": "#2a3852",
+        "chailove": "#8d9195",
+        "channelf": "#6ccd72",
+        "coco": "#a9a7a5",
+        "colecovision": "#353f78",
+        "completed": "#405a7a",
+        "consolearcade": "#c2c6c2",
+        "cps": "#b8624c",
+        "cps1": "#a26237",
+        "cps2": "#68592e",
+        "cps3": "#5a3f32",
+        "creativision": "#293861",
+        "crvision": "#478cba",
+        "custom-collections": "#402e2c",
+        "daphne": "#7836a0",
+        "default": "#446992",
+        "desktop": "#304244",
+        "doom": "#313f3a",
+        "dos": "#2a3852",
+        "dragon32": "#44433f",
+        "dreamcast": "#373228",
+        "easyrpg": "#62827c",
+        "electron": "#563522",
+        "emulators": "#56678d",
+        "epic": "#3a3028",
+        "famicom": "#343c4b",
+        "fba": "#c5cac1",
+        "fbneo": "#3b4132",
+        "final_fantasy": "#5073ab",
+        "flash": "#482861",
+        "fm7": "#4d3b67",
+        "fmtowns": "#512e26",
+        "fmtownsmarty": "#512e26",
+        "fpinball": "#1b384f",
+        "gamate": "#3c2f3e",
+        "gameandwatch": "#bfccc5",
+        "gamecom": "#341e16",
+        "gamecube": "#4c442d",
+        "gamegear": "#b6afc9",
+        "gamepock": "#bdbdbd",
+        "gb": "#99aa95",
+        "gb2players": "#c44d46",
+        "gba": "#287e44",
+        "gba2players": "#59a65e",
+        "gbah": "#3a2d36",
+        "gbc": "#6b9260",
+        "gbc2players": "#3b367f",
+        "gbch": "#5a5536",
+        "gbh": "#45571b",
+        "gemrb": "#463225",
+        "genesis": "#76c5d2",
+        "genh": "#4d6a49",
+        "gmaster": "#3c403b",
+        "gp32": "#a4526f",
+        "gx4000": "#484848",
+        "hbmame": "#5f616e",
+        "intellivision": "#4676a4",
+        "j2me": "#767270",
+        "kodi": "#43353d",
+        "laser310": "#375882",
+        "laserdisc": "#445579",
+        "lcdgames": "#c1cf80",
+        "love": "#8d9195",
+        "lowresnx": "#1e2c4d",
+        "lutris": "#919a8b",
+        "lutro": "#434545",
+        "macintosh": "#2f3c45",
+        "mame-advmame": "#b7c0b3",
+        "mame": "#42352a",
+        "mario": "#487e3d",
+        "mastersystem": "#1d5e55",
+        "megacd": "#62573a",
+        "megacdjp": "#b3b0ae",
+        "megadrive-japan": "#916f48",
+        "megadrive": "#76c5d2",
+        "megadrivejp": "#916f48",
+        "megaduck": "#b54140",
+        "mess": "#402e25",
+        "model2": "#421a15",
+        "model3": "#d59767",
+        "moonlight": "#698e9c",
+        "moto": "#536367",
+        "msx": "#2d3033",
+        "msx1": "#7a9464",
+        "msx2+": "#2d3033",
+        "msx2": "#79a4d2",
+        "msxturbor": "#3d2b26",
+        "mugen": "#1a2b3e",
+        "multivision": "#ceae9b",
+        "n3ds": "#3e2c22",
+        "n64": "#83bbc8",
+        "n64dd": "#9882a9",
+        "namco2x6": "#8b5b5b",
+        "naomi": "#40376c",
+        "naomi2": "#a7a8ad",
+        "naomigd": "#79484b",
+        "nds": "#925534",
+        "neogeo": "#a48c7f",
+        "neogeocd": "#473937",
+        "neogeocdjp": "#473937",
+        "nes": "#3d5557",
+        "nesdisk": "#606845",
+        "nesh": "#0d1420",
+        "ngage": "#9a9ab0",
+        "ngp": "#513025",
+        "ngpc": "#4a506d",
+        "now-playing": "#35456b",
+        "odyssey2": "#274c40",
+        "openbor": "#562f2d",
+        "oric": "#333023",
+        "palm": "#8d7548",
+        "pc": "#504c46",
+        "pc88": "#454260",
+        "pc98": "#795648",
+        "pcarcade": "#49464e",
+        "pce-cd": "#3b5b9a",
+        "pcengine": "#cba490",
+        "pcenginecd": "#3b5b9a",
+        "pcfx": "#3d2b1c",
+        "pet": "#4596ac",
+        "pico8": "#565765",
+        "plus4": "#4b473d",
+        "pokemini": "#4a5a69",
+        "pokemon": "#44474f",
+        "ports": "#cb9253",
+        "prboom": "#313f3a",
+        "ps2": "#435c7f",
+        "ps3": "#2e4d59",
+        "ps4": "#313d43",
+        "psp": "#b0a5a0",
+        "pspminis": "#778494",
+        "psvita": "#303d3e",
+        "psx": "#373920",
+        "pv1000": "#808479",
+        "pygame": "#9b656a",
+        "pyxel": "#2b325f",
+        "quake": "#36261e",
+        "samcoupe": "#3e6da1",
+        "satellaview": "#b7bab7",
+        "saturn": "#4b5f7a",
+        "saturnjp": "#6d62d3",
+        "scummvm": "#c3a254",
+        "scv": "#4a8296",
+        "sega32x": "#715047",
+        "sega32xjp": "#848947",
+        "sega32xna": "#715047",
+        "segacd": "#8e7a2b",
+        "segastv": "#727b28",
+        "sf": "#a26237",
+        "sfc": "#a77c33",
+        "sg-1000": "#42261e",
+        "sgb": "#7a977d",
+        "snes": "#3f6c94",
+        "snesh": "#332418",
+        "snesmsu-1": "#57483e",
+        "snesmsu1": "#57483e",
+        "snesna": "#20213f",
+        "socrates": "#3e3b38",
+        "solarus": "#623e5e",
+        "spectravideo": "#222238",
+        "st-v": "#727b28",
+        "steam": "#3b424a",
+        "stratagus": "#393630",
+        "stv": "#727b28",
+        "sufami": "#5f7ec1",
+        "supergb": "#7a977d",
+        "supergrafx": "#3a4b2a",
+        "supervision": "#4231a3",
+        "supracan": "#424550",
         "switch": "#a17d79",
-        "vsmile": "#96976d",
-        "zelda": "#a5a077",
-        "satellaview": "#727c86"
+        "symbian": "#4c201e",
+        "tanodragon": "#634c24",
+        "tg-cd": "#6c2723",
+        "tg16": "#cba490",
+        "tg16cd": "#6c2723",
+        "thextech": "#a5703c",
+        "thomson": "#544839",
+        "ti99": "#3a3f4d",
+        "tic80": "#31346d",
+        "to8": "#544839",
+        "triforce": "#706752",
+        "trs-80": "#a19e9c",
+        "tutor": "#75ab3b",
+        "tvgames": "#43458d",
+        "type-x": "#591d1c",
+        "tyrquake": "#36261e",
+        "uzebox": "#cfa468",
+        "vc4000": "#070202",
+        "vectrex": "#62778e",
+        "vic20": "#4b281d",
+        "videopac": "#4d2c2f",
+        "videopacplus": "#274c40",
+        "virtualboy": "#74667b",
+        "vis": "#5c4f4b",
+        "vpinball": "#d49174",
+        "vsmile": "#574d2f",
+        "wasm4": "#c88857",
+        "wii": "#46593c",
+        "wiiu": "#6d5c5a",
+        "windows": "#3c534a",
+        "windows3x": "#4f3628",
+        "windows9x": "#3e3838",
+        "wonderswan": "#57638f",
+        "wonderswancolor": "#b3957a",
+        "x1": "#6e7b73",
+        "x68000": "#402822",
+        "xbox": "#3d4233",
+        "xbox360": "#9d5d33",
+        "xegs": "#5474aa",
+        "zelda": "#6a593d",
+        "zeldac": "#6a593d",
+        "zmachine": "#4a4841",
+        "zx81": "#7a4629",
+        "zxnext": "#1b393b",
+        "zxspectrum": "#413a2c"
     }
 
     readonly property var gameSystems: [
