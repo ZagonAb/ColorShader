@@ -323,13 +323,27 @@ FocusScope {
             focus: mainMenuFocused
 
             Keys.onPressed: {
-                if (!event.isAutoRepeat && api.keys.isAccept(event)) {
-                    event.accepted = true;
-                    mainMenuVisible = false;
-                    mainMenuFocused = false;
-                    gamesGridVisible = true;
-                    gamesGridFocused = true;
-                    goSound.play();
+                if (!event.isAutoRepeat) {
+                    if (api.keys.isAccept(event)) {
+                        event.accepted = true;
+                        mainMenuVisible = false;
+                        mainMenuFocused = false;
+                        gamesGridVisible = true;
+                        gamesGridFocused = true;
+                        goSound.play();
+                    } else if (api.keys.isNextPage(event)) {
+                        event.accepted = true;
+                        if (currentIndex < count - 1) {
+                            currentIndex++;
+                            changeSound.play();
+                        }
+                    } else if (api.keys.isPrevPage(event)) {
+                        event.accepted = true;
+                        if (currentIndex > 0) {
+                            currentIndex--;
+                            changeSound.play();
+                        }
+                    }
                 }
             }
 
@@ -368,7 +382,7 @@ FocusScope {
                 }
 
                 width: parent.width * 0.90
-                height: parent.height * 0.98 // posibilidad de dejarlo entero
+                height: parent.height * 0.98
 
                 property int columns: 6
                 property int rows: 3
@@ -385,6 +399,19 @@ FocusScope {
                     scale: selected && gameGrid.focus ? 1.05 : 1
 
                     property var game
+
+                    property real itemOpacity: {
+                        var itemY = y + height / 2;
+                        var gridTop = gameGrid.contentY;
+                        var gridBottom = gameGrid.contentY + gameGrid.height;
+
+                        if (itemY < gridTop || itemY > gridBottom) {
+                            return 0;
+                        }
+                        return 1;
+                    }
+
+                    opacity: itemOpacity
 
                     Behavior on scale {
                         NumberAnimation {
@@ -751,10 +778,12 @@ FocusScope {
         id: topBar
         width: parent.width
         height: root.height * 0.060
+
         anchors {
             top: parent.top
             topMargin: 20
         }
+
         Row {
             id: topRow
             width: parent.width
@@ -763,6 +792,7 @@ FocusScope {
             spacing: 10
 
             Item { width: root.width * 0.015; height: 60 }
+
             Text {
                 id: clock
                 color: "white"
@@ -791,6 +821,7 @@ FocusScope {
                     onTriggered: clock.text = clock.formatTime()
                 }
             }
+
             Item { width: parent.width - clock.width - batteryIcon.width - 20; height: 60 }
 
             Image {
@@ -812,7 +843,41 @@ FocusScope {
                     onTriggered: batteryIcon.source = getBatteryIcon()
                 }
             }
+
             Item { width: root.width * 0.010; height: 60 }
+        }
+    }
+
+    Item {
+        id: logoContainer
+        width: parent.width * 0.4
+        height: parent.height * 0.3
+
+        anchors {
+            top: topBar.bottom
+            right: parent.right
+            topMargin: 20
+            rightMargin: parent.width * 0.05
+        }
+
+        visible: gamesGridVisible && gamesGridFocused
+        opacity: 0.1
+
+        Image {
+            id: logoImage2
+            source: "assets/logos/" + currentShortName + ".png"
+            width: parent.width
+            height: parent.height
+            fillMode: Image.PreserveAspectFit
+            asynchronous: true
+            mipmap: true
+            anchors.centerIn: parent
+
+            onStatusChanged: {
+                if (status === Image.Error) {
+                    console.log("Error cargando la imagen del logo.");
+                }
+            }
         }
     }
 
@@ -984,6 +1049,13 @@ FocusScope {
                     wrapMode: Text.Wrap
                     font.pixelSize: root.width * 0.012
                     color: "white"
+                    layer.enabled: true
+                    layer.effect: DropShadow {
+                        color: "black"
+                        radius: 2
+                        samples: 5
+                        spread: 0.5
+                    }
                 }
             }
         }
