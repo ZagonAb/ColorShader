@@ -18,6 +18,173 @@ FocusScope {
     property var colorMap: ({})
     property string currentColor: "#191919"
     property var currentgame: null
+    property bool screensaverActive: false
+    property int inactivityTimeout: 300000
+    property var randomScreenshots: []
+    property int currentScreenshotIndex: 0
+    property bool showImage1: true
+
+    Timer {
+        id: inactivityTimer
+        interval: inactivityTimeout
+        running: !screensaverActive
+        onTriggered: {
+            screensaverActive = true;
+            startScreensaver();
+        }
+    }
+
+    function resetInactivityTimer() {
+        inactivityTimer.restart();
+    }
+
+    function startScreensaver() {
+        console.log("Screensaver activado");
+        randomScreenshots = getRandomScreenshots();
+        if (randomScreenshots.length > 0) {
+            currentScreenshotIndex = 0;
+            showNextScreenshot();
+        } else {
+            console.log("No se encontraron screenshots.");
+        }
+    }
+
+    function stopScreensaver() {
+        screensaverActive = false;
+        console.log("Screensaver desactivado");
+
+        screenshotTransition.stop();
+
+        screenshotImage1.opacity = 0;
+        screenshotImage2.opacity = 0;
+    }
+
+    function getRandomScreenshots() {
+        var screenshots = [];
+        for (var i = 0; i < api.collections.count; i++) {
+            var games = api.collections.get(i).games;
+            for (var j = 0; j < games.count; j++) {
+                var game = games.get(j);
+                if (game.assets.screenshot) {
+                    screenshots.push(game.assets.screenshot);
+                }
+            }
+        }
+        return screenshots.sort(() => Math.random() - 0.5);
+    }
+
+    function showNextScreenshot() {
+        if (screensaverActive && randomScreenshots.length > 0) {
+            if (currentScreenshotIndex >= randomScreenshots.length) {
+                currentScreenshotIndex = 0;
+            }
+
+            if (showImage1) {
+                screenshotImage2.source = randomScreenshots[currentScreenshotIndex];
+                screenshotImage1.opacity = 0;
+                screenshotImage2.opacity = 1;
+            } else {
+                screenshotImage1.source = randomScreenshots[currentScreenshotIndex];
+                screenshotImage2.opacity = 0;
+                screenshotImage1.opacity = 1;
+            }
+
+            currentScreenshotIndex++;
+            showImage1 = !showImage1;
+            screenshotTransition.restart();
+        } else if (randomScreenshots.length === 0) {
+            console.log("No hay más screenshots disponibles.");
+            stopScreensaver();
+        }
+    }
+
+    Timer {
+        id: screenshotTransition
+        interval: 5000
+        running: screensaverActive
+        repeat: true
+        onTriggered: showNextScreenshot()
+    }
+
+    Rectangle {
+        id: imagesScreenshots
+        color: "transparent"
+        width: parent.width
+        height: parent.height
+        z: 1001
+
+        Image {
+            id: screenshotImage1
+            width: parent.width * 1.05
+            height: parent.height * 1.05
+            opacity: 0
+            fillMode: Image.Stretch
+            scale: 1.2
+
+            Behavior on opacity {
+                NumberAnimation { duration: 1000 }
+            }
+
+            SequentialAnimation on x {
+                loops: Animation.Infinite
+                PropertyAnimation {
+                    from: 0
+                    to: parent.width - screenshotImage1.width
+                    duration: 5000
+                }
+                PropertyAnimation {
+                    from: parent.width - screenshotImage1.width
+                    to: 0
+                    duration: 5000
+                }
+            }
+        }
+
+        Image {
+            id: screenshotImage2
+            width: parent.width * 1.05
+            height: parent.height * 1.05
+            opacity: 0
+            fillMode: Image.Stretch
+            scale: 1.2
+
+            Behavior on opacity {
+                NumberAnimation { duration: 1000 }
+            }
+
+            SequentialAnimation on x {
+                loops: Animation.Infinite
+                PropertyAnimation {
+                    from: 0
+                    to: parent.width - screenshotImage2.width
+                    duration: 5000
+                }
+                PropertyAnimation {
+                    from: parent.width - screenshotImage2.width
+                    to: 0
+                    duration: 5000
+                }
+            }
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: {
+            if (screensaverActive) {
+                stopScreensaver();
+            }
+            resetInactivityTimer();
+        }
+    }
+
+    Keys.onPressed: {
+        if (screensaverActive) {
+            stopScreensaver();
+        }
+        resetInactivityTimer();
+    }
 
     SoundEffect {
         id: changeSound
@@ -344,7 +511,12 @@ FocusScope {
                             changeSound.play();
                         }
                     }
+
+                    if (root.screensaverActive) {
+                        root.stopScreensaver();
+                    }
                 }
+                root.resetInactivityTimer();
             }
 
             Keys.onLeftPressed: {
@@ -352,6 +524,11 @@ FocusScope {
                     currentIndex--;
                     changeSound.play();
                 }
+
+                if (root.screensaverActive) {
+                    root.stopScreensaver();
+                }
+                root.resetInactivityTimer();
             }
 
             Keys.onRightPressed: {
@@ -359,6 +536,11 @@ FocusScope {
                     currentIndex++;
                     changeSound.play();
                 }
+
+                if (root.screensaverActive) {
+                    root.stopScreensaver();
+                }
+                root.resetInactivityTimer();
             }
         }
 
@@ -690,6 +872,11 @@ FocusScope {
                         currentIndex--;
                         changeSound.play()
                     }
+
+                    if (root.screensaverActive) {
+                        root.stopScreensaver();
+                    }
+                    root.resetInactivityTimer();
                 }
 
                 Keys.onRightPressed: {
@@ -697,6 +884,11 @@ FocusScope {
                         currentIndex++;
                         changeSound.play()
                     }
+
+                    if (root.screensaverActive) {
+                        root.stopScreensaver();
+                    }
+                    root.resetInactivityTimer();
                 }
 
                 Keys.onPressed: {
@@ -707,7 +899,12 @@ FocusScope {
                         gamesGridVisible = false;
                         gamesGridFocused = false;
                         backSound.play();
+
+                        if (root.screensaverActive) {
+                            root.stopScreensaver();
+                        }
                     }
+                    root.resetInactivityTimer();
                 }
             }
         }
