@@ -157,12 +157,12 @@ FocusScope {
                 PropertyAnimation {
                     from: 0
                     to: parent.width - screenshotImage2.width
-                    duration: 5000
+                    duration: 10000
                 }
                 PropertyAnimation {
                     from: parent.width - screenshotImage2.width
                     to: 0
-                    duration: 5000
+                    duration: 10000
                 }
             }
         }
