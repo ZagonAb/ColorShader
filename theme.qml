@@ -19,10 +19,11 @@ FocusScope {
     property string currentColor: "#191919"
     property var currentgame: null
     property bool screensaverActive: false
-    property int inactivityTimeout: 300000
+    property int inactivityTimeout: 60000 //1000
     property var randomScreenshots: []
     property int currentScreenshotIndex: 0
     property bool showImage1: true
+    property real themeContainerOpacity: 1.0
 
     Timer {
         id: inactivityTimer
@@ -40,6 +41,7 @@ FocusScope {
 
     function startScreensaver() {
         console.log("Screensaver activado");
+        themeContainerOpacity = 0.0;
         randomScreenshots = getRandomScreenshots();
         if (randomScreenshots.length > 0) {
             currentScreenshotIndex = 0;
@@ -51,6 +53,7 @@ FocusScope {
 
     function stopScreensaver() {
         screensaverActive = false;
+        themeContainerOpacity = 1.0;
         console.log("Screensaver desactivado");
 
         screenshotTransition.stop();
@@ -79,6 +82,9 @@ FocusScope {
                 currentScreenshotIndex = 0;
             }
 
+            var game = getGameFromScreenshot(randomScreenshots[currentScreenshotIndex]);
+
+            // Alternar entre las dos imágenes
             if (showImage1) {
                 screenshotImage2.source = randomScreenshots[currentScreenshotIndex];
                 screenshotImage1.opacity = 0;
@@ -89,6 +95,12 @@ FocusScope {
                 screenshotImage1.opacity = 1;
             }
 
+            if (game && game.assets.logo) {
+                gameLogo1.source = game.assets.logo;
+            } else {
+                gameLogo1.source = "";
+            }
+
             currentScreenshotIndex++;
             showImage1 = !showImage1;
             screenshotTransition.restart();
@@ -96,6 +108,19 @@ FocusScope {
             console.log("No hay más screenshots disponibles.");
             stopScreensaver();
         }
+    }
+
+    function getGameFromScreenshot(screenshot) {
+        for (var i = 0; i < api.collections.count; i++) {
+            var games = api.collections.get(i).games;
+            for (var j = 0; j < games.count; j++) {
+                var game = games.get(j);
+                if (game.assets.screenshot === screenshot) {
+                    return game;
+                }
+            }
+        }
+        return null;
     }
 
     Timer {
@@ -164,6 +189,35 @@ FocusScope {
                     to: 0
                     duration: 10000
                 }
+            }
+        }
+
+        Image {
+            width: parent.width
+            height: parent.height
+            fillMode: Image.Stretch
+            source: "assets/scanline-png/crt.png"
+            visible: screensaverActive
+            opacity: screensaverActive ? 1 : 0.8
+            Behavior on opacity {
+                NumberAnimation { duration: 1000 }
+            }
+            mipmap: true
+        }
+
+        Image {
+            id: gameLogo1
+            width: parent.width * 0.5
+            height: width * 0.5
+            anchors {
+                right: parent.right
+                bottom: parent.bottom
+                margins: 20
+            }
+            fillMode: Image.PreserveAspectFit
+            opacity: screensaverActive ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation { duration: 1000 }
             }
         }
     }
@@ -325,6 +379,12 @@ FocusScope {
     Item {
         id: themeContainer
         anchors.fill: parent
+
+        opacity: themeContainerOpacity
+
+        Behavior on opacity {
+            NumberAnimation { duration: 1000 }
+        }
 
         Image {
             id: gamescreenshot
@@ -555,6 +615,12 @@ FocusScope {
             clip: true
             visible: gamesGridVisible
 
+            opacity: themeContainerOpacity
+
+            Behavior on opacity {
+                NumberAnimation { duration: 1000 }
+            }
+
             GridView {
                 id: gameGrid
 
@@ -593,7 +659,8 @@ FocusScope {
                         return 1;
                     }
 
-                    opacity: itemOpacity
+                    //opacity: itemOpacity
+                    opacity: itemOpacity * themeContainerOpacity
 
                     Behavior on scale {
                         NumberAnimation {
@@ -975,10 +1042,15 @@ FocusScope {
         id: topBar
         width: parent.width
         height: root.height * 0.060
-
         anchors {
             top: parent.top
             topMargin: 20
+        }
+
+        opacity: themeContainerOpacity
+
+        Behavior on opacity {
+            NumberAnimation { duration: 1000 }
         }
 
         Row {
@@ -1058,7 +1130,11 @@ FocusScope {
         }
 
         visible: gamesGridVisible && gamesGridFocused
-        opacity: 0.1
+        opacity: 0.1 * themeContainerOpacity
+
+        Behavior on opacity {
+            NumberAnimation { duration: 1000 }
+        }
 
         Image {
             id: logoImage2
@@ -1084,6 +1160,12 @@ FocusScope {
         height: parent.height * 0.50
         visible: gamesGridVisible
         clip: true
+
+        opacity: themeContainerOpacity
+
+        Behavior on opacity {
+            NumberAnimation { duration: 1000 }
+        }
 
         Column {
             anchors.fill: parent
