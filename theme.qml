@@ -638,6 +638,8 @@ FocusScope {
                 cellWidth: width / columns
                 cellHeight: height / rows
 
+                cacheBuffer: cellHeight * rows
+
                 delegate: Item {
                     id: delegateRoot
                     width: gameGrid.cellWidth - gameGrid.cellWidth * 0.030
@@ -647,20 +649,15 @@ FocusScope {
                     scale: selected && gameGrid.focus ? 1.05 : 1
 
                     property var game
-
-                    property real itemOpacity: {
+                    property bool isVisible: {
                         var itemY = y + height / 2;
                         var gridTop = gameGrid.contentY;
                         var gridBottom = gameGrid.contentY + gameGrid.height;
 
-                        if (itemY < gridTop || itemY > gridBottom) {
-                            return 0;
-                        }
-                        return 1;
+                        return itemY >= gridTop && itemY <= gridBottom;
                     }
 
-                    //opacity: itemOpacity
-                    opacity: itemOpacity * themeContainerOpacity
+                    opacity: isVisible ? 1 : 0
 
                     Behavior on scale {
                         NumberAnimation {
@@ -714,7 +711,7 @@ FocusScope {
                     Loader {
                         id: loader
                         anchors.fill: parent
-                        active: gameGrid.activeFocus
+                        active: gamesGridVisible && isVisible
                         sourceComponent: Rectangle {
                             id: backgroundRect
                             anchors.fill: parent
