@@ -730,7 +730,7 @@ FocusScope {
                                     visible: false
                                 }
 
-                                Image {
+                                /*Image {
                                     id: boxfront
                                     source: game ? game.assets.screenshot : ""
                                     fillMode: Image.PreserveAspectCrop
@@ -742,6 +742,25 @@ FocusScope {
                                     layer.enabled: true
                                     layer.effect: OpacityMask {
                                         maskSource: mask
+                                    }
+                                }*/
+
+                                Image {
+                                    id: boxfront
+                                    source: game ? game.assets.screenshot : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    asynchronous: true
+                                    width: parent.width
+                                    height: parent.height
+                                    visible: true
+                                    sourceSize { width: 256; height: 256 }
+                                    layer.enabled: true
+                                    layer.effect: OpacityMask {
+                                        maskSource: Rectangle {
+                                            width: backgroundRect.width
+                                            height: backgroundRect.height
+                                            radius: 10
+                                        }
                                     }
                                 }
 
