@@ -5,9 +5,8 @@
 ![screen1](https://github.com/ZagonAb/ColorShader/blob/f76c83700c05794694492671d1546d5673c68c35/.meta/screenshots/screen1.png)
 ![screen2](https://github.com/ZagonAb/ColorShader/blob/f76c83700c05794694492671d1546d5673c68c35/.meta/screenshots/screen2.png)
 
-```markdown
 
-Un tema moderno basado en QML para Pegasus Frontend, diseñado para ofrecer una interfaz de juegos elegante y receptiva con funciones avanzadas.
+Un tema moderno para Pegasus Frontend, diseñado para ofrecer una interfaz de juegos elegante y receptiva.
 
 ## Características Principales
 - **Modo salvapantallas**: Rotación de capturas de pantalla con logos del sistema tras inactividad
