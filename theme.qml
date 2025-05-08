@@ -218,19 +218,19 @@ FocusScope {
     SoundEffect {
         id: changeSound
         source: "assets/sound/change.wav"
-        volume: 1
+        volume: 0.5
     }
 
     SoundEffect {
         id: goSound
         source: "assets/sound/go.wav"
-        volume: 1
+        volume: 0.5
     }
 
     SoundEffect {
         id: backSound
         source: "assets/sound/back.wav"
-        volume: 1
+        volume: 0.5
     }
 
     SoundEffect {
@@ -728,7 +728,7 @@ FocusScope {
                                                         logoOverlay.opacity = 1;
                                                     }
                                                     if (status === MediaPlayer.Error) {
-                                                        console.log("Video error:", errorString);
+                                                        //console.log("Video error:", errorString);
                                                     }
                                                 }
                                             }
