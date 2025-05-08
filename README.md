@@ -1,12 +1,12 @@
 
-# Screenshot
+## ColorShader
+
+- **Un tema moderno para Pegasus Frontend, diseñado para ofrecer una interfaz de juegos elegante y receptiva.**
 
 ![screen](https://github.com/ZagonAb/ColorShader/blob/f76c83700c05794694492671d1546d5673c68c35/.meta/screenshots/screen.png)
 ![screen1](https://github.com/ZagonAb/ColorShader/blob/f76c83700c05794694492671d1546d5673c68c35/.meta/screenshots/screen1.png)
 ![screen2](https://github.com/ZagonAb/ColorShader/blob/f76c83700c05794694492671d1546d5673c68c35/.meta/screenshots/screen2.png)
 
-
-Un tema moderno para Pegasus Frontend, diseñado para ofrecer una interfaz de juegos elegante y receptiva.
 
 ## Características Principales
 - **Modo salvapantallas**: Rotación de capturas de pantalla con logos del sistema tras inactividad
@@ -24,7 +24,7 @@ Un tema moderno para Pegasus Frontend, diseñado para ofrecer una interfaz de ju
 
 ## 🛠️ Instalación
 
-[Descarga](https://github.com/ZagonAb/Limbo/archive/refs/heads/main.zip) y extrae el tema a tu [directorio de temas](http://pegasus-frontend.org/docs/user-guide/installing-themes). Luego puede seleccionarlo en el menú de configuración de Pegasus.
+[Descarga](https://github.com/ZagonAb/ColorShader/archive/refs/heads/main.zip) y extrae el tema a tu [directorio de temas](http://pegasus-frontend.org/docs/user-guide/installing-themes). Luego puede seleccionarlo en el menú de configuración de Pegasus.
 
 ## 📜 Licencia
 
