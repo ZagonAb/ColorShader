@@ -17,7 +17,7 @@ FocusScope {
     property string currentShortName: ""
     property string collectionDescription: ""
     property var colorMap: ({})
-    property string currentColor: "#000000"
+    property string currentColor: "#333333"
     property var currentgame: null
     property bool screensaverActive: false
     property int inactivityTimeout: 60000
@@ -41,38 +41,20 @@ FocusScope {
     }
 
     function startScreensaver() {
-        //console.log("Screensaver activado");
         themeContainerOpacity = 0.0;
-        randomScreenshots = getRandomScreenshots();
+        randomScreenshots = Utils.getRandomScreenshots(api.collections);
         if (randomScreenshots.length > 0) {
             currentScreenshotIndex = 0;
             showNextScreenshot();
-        } else {
-            //console.log("No se encontraron screenshots.");
         }
     }
 
     function stopScreensaver() {
         screensaverActive = false;
         themeContainerOpacity = 1.0;
-        //console.log("Screensaver desactivado");
         screenshotTransition.stop();
         screenshotImage1.opacity = 0;
         screenshotImage2.opacity = 0;
-    }
-
-    function getRandomScreenshots() {
-        var screenshots = [];
-        for (var i = 0; i < api.collections.count; i++) {
-            var games = api.collections.get(i).games;
-            for (var j = 0; j < games.count; j++) {
-                var game = games.get(j);
-                if (game.assets.screenshot) {
-                    screenshots.push(game.assets.screenshot);
-                }
-            }
-        }
-        return screenshots.sort(() => Math.random() - 0.5);
     }
 
     function showNextScreenshot() {
@@ -81,7 +63,7 @@ FocusScope {
                 currentScreenshotIndex = 0;
             }
 
-            var game = getGameFromScreenshot(randomScreenshots[currentScreenshotIndex]);
+            var game = Utils.getGameFromScreenshot(api.collections, randomScreenshots[currentScreenshotIndex]);
 
             if (showImage1) {
                 screenshotImage2.source = randomScreenshots[currentScreenshotIndex];
@@ -103,22 +85,17 @@ FocusScope {
             showImage1 = !showImage1;
             screenshotTransition.restart();
         } else if (randomScreenshots.length === 0) {
-            //console.log("No hay más screenshots disponibles.");
             stopScreensaver();
         }
     }
 
-    function getGameFromScreenshot(screenshot) {
-        for (var i = 0; i < api.collections.count; i++) {
-            var games = api.collections.get(i).games;
-            for (var j = 0; j < games.count; j++) {
-                var game = games.get(j);
-                if (game.assets.screenshot === screenshot) {
-                    return game;
-                }
-            }
-        }
-        return null;
+    function updateCurrentColor() {
+        currentColor = Utils.colorMapping[currentShortName] || "#333333";
+        gradientCanvas.requestPaint();
+    }
+
+    function getBatteryIcon() {
+        return Utils.getBatteryIcon(api.device.batteryPercent, api.device.batteryCharging);
     }
 
     Timer {
@@ -256,94 +233,10 @@ FocusScope {
         volume: 1
     }
 
-    function formatGameDescription(description) {
-        if (!description || description.trim() === "") {
-            return "No description available, use game scraper to get proper information..."
-        }
-
-        return description
-    }
-
-    function formatGameDeveloper(developer) {
-        if (!developer || developer.trim() === "") {
-            return "Unknown developer"
-        }
-
-        return developer
-    }
-
-    function getPlayersContent(players) {
-        if (players > 1) {
-            return {
-                count: players,
-                source: "assets/icons/players.png"
-            };
-        }
-    }
-
-    function getReleaseYearText(year) {
-        if (year === 0 || !year) {
-            return "Unknown release year";
-        }
-        return year.toString();
-    }
-
-    function formatGameGenre(genre) {
-        if (!genre || genre.trim() === "") {
-            return "Unknown genre"
-        }
-
-        const maxLength = 40
-        if (genre.length <= maxLength) {
-            return genre
-        } else {
-            return genre.substring(0, maxLength - 3) + "..."
-        }
-    }
-
-    function displayRating(rating) {
-        const fullStars = Math.floor(rating * 5);
-        const hasHalfStar = (rating * 5) % 1 !== 0;
-
-        let ratingDisplay = "";
-        for (let i = 0; i < fullStars; i++) {
-            ratingDisplay += "assets/icons/star1.png ";
-        }
-        if (hasHalfStar) {
-            ratingDisplay += "assets/icons/star05.png ";
-        }
-        for (let i = 0; i < 5 - fullStars - (hasHalfStar ? 1 : 0); i++) {
-            ratingDisplay += "assets/icons/star0.png ";
-        }
-
-        return ratingDisplay.trim();
-    }
-
-
-    function updateCurrentColor() {
-        currentColor = Utils.colorMapping[currentShortName] || "#000000";
-        gradientCanvas.requestPaint();
-    }
-
-    function getBatteryIcon() {
-        if (isNaN(api.device.batteryPercent) || api.device.batteryCharging) {
-            return "assets/icons/charging.png";
-        } else {
-            const batteryPercent = api.device.batteryPercent * 100;
-            if (batteryPercent <= 20) {
-                return "assets/icons/10.png";
-            } else if (batteryPercent <= 40) {
-                return "assets/icons/25.png";
-            } else if (batteryPercent <= 60) {
-                return "assets/icons/50.png";
-            } else if (batteryPercent <= 80) {
-                return "assets/icons/75.png";
-            } else if (batteryPercent <= 90) {
-                return "assets/icons/90.png";
-            } else {
-                return "assets/icons/95.png";
-            }
-        }
+    SoundEffect {
+        id: playSound
+        source: "assets/sound/go.wav"
+        volume: 1.0
     }
 
     Component.onCompleted: {
@@ -360,13 +253,13 @@ FocusScope {
             anchors.fill: parent
             onPaint: {
                 var ctx = gradientCanvas.getContext('2d');
-                var gradCenterX = 0;
+                var gradCenterX = 9;
                 var gradCenterY = height;
-                var gradRadius = Math.max(width, height);
+                var gradRadius = Math.max(width, height)
 
                 var gradient = ctx.createRadialGradient(gradCenterX, gradCenterY, 0, gradCenterX, gradCenterY, gradRadius);
-                gradient.addColorStop(0, "#000000");
-                gradient.addColorStop(0.3, "#191919");
+                gradient.addColorStop(0.1, "#000000");
+                gradient.addColorStop(0.4, "#191919");
                 gradient.addColorStop(1, currentColor);
 
                 ctx.fillStyle = gradient;
@@ -378,7 +271,6 @@ FocusScope {
     Item {
         id: themeContainer
         anchors.fill: parent
-
         opacity: themeContainerOpacity
 
         Behavior on opacity {
@@ -531,7 +423,7 @@ FocusScope {
                 currentShortName = model.get(currentIndex).shortName
                 gameGrid.model = api.collections.get(currentIndex).games;
                 updateCurrentColor()
-                loadCollectionMetadata ()
+                loadCollectionMetadata()
             }
 
             Component.onCompleted: {
@@ -557,6 +449,10 @@ FocusScope {
                         gamesGridVisible = true;
                         gamesGridFocused = true;
                         goSound.play();
+                        currentgame = gameGrid.model.get(gameGrid.currentIndex);
+                        if (gameGrid.currentItem && gameGrid.currentItem.updateVideoState) {
+                            gameGrid.currentItem.updateVideoState();
+                        }
                     } else if (api.keys.isNextPage(event)) {
                         event.accepted = true;
                         if (currentIndex < count - 1) {
@@ -638,6 +534,18 @@ FocusScope {
                 cellHeight: height / rows
 
                 cacheBuffer: 200
+
+                Component.onCompleted: {
+                    if (count > 0) {
+                        currentIndex = 0;
+                        currentgame = model.get(0);
+                        Qt.callLater(function() {
+                            if (currentItem && currentItem.updateVideoState) {
+                                currentItem.updateVideoState();
+                            }
+                        });
+                    }
+                }
 
                 delegate: Item {
                     id: delegateRoot
@@ -814,10 +722,7 @@ FocusScope {
                                                         play();
                                                     }
                                                     if (status === MediaPlayer.EndOfMedia) {
-                                                        // Cuando el video termina, ocultar el VideoOutput
                                                         videoOutput.visible = false;
-
-                                                        // Restaurar el efecto FastBlur y mostrar el logoOverlay
                                                         fastBlur.radius = 10;
                                                         fastBlur.opacity = 1;
                                                         logoOverlay.opacity = 1;
@@ -914,8 +819,70 @@ FocusScope {
                                     height: parent.height * 0.2
                                     color: Qt.rgba(1, 1, 1, 0.5)
                                     radius: 20
-                                    opacity: 0
+                                    opacity: delegateRoot.selected ? 1 : 0
                                     z: 1000
+
+                                    visible: true
+
+                                    scale: playGameMouseArea.pressed ? 0.95 : 1.0
+                                    Behavior on scale {
+                                        NumberAnimation { duration: 100 }
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation { duration: 100 }
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "Play"
+                                        color: "white"
+                                        font.pixelSize: parent.height * 0.4
+                                        font.bold: true
+                                    }
+
+                                    MouseArea {
+                                        id: playGameMouseArea
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+
+                                        onClicked: {
+                                            parent.color = Qt.rgba(0.8, 0.8, 0.8, 0.7);
+                                            playSound.play();
+
+                                            timer.start();
+                                        }
+
+                                        onPressed: {
+                                            parent.color = Qt.rgba(0.7, 0.7, 0.7, 0.7);
+                                        }
+
+                                        onReleased: {
+                                            if (!containsMouse) {
+                                                parent.color = Qt.rgba(1, 1, 1, 0.5);
+                                            }
+                                        }
+
+                                        onEntered: {
+                                            parent.color = Qt.rgba(0.9, 0.9, 0.9, 0.6);
+                                        }
+
+                                        onExited: {
+                                            parent.color = Qt.rgba(1, 1, 1, 0.5);
+                                        }
+                                    }
+
+                                    Timer {
+                                        id: timer
+                                        interval: 150
+                                        onTriggered: {
+                                            if (currentgame) {
+                                                api.memory.set('lastPlayedGame', currentgame);
+                                                currentgame.launch();
+                                            }
+                                            playGameButton.color = Qt.rgba(1, 1, 1, 0.5);
+                                        }
+                                    }
 
                                     Behavior on opacity {
                                         NumberAnimation {
@@ -924,23 +891,8 @@ FocusScope {
                                         }
                                     }
 
-                                    visible: {
-                                        return delegateRoot.selected ||
-                                        (videoLoader.item &&
-                                        videoLoader.item.mediaPlayer &&
-                                        videoLoader.item.mediaPlayer.status === MediaPlayer.Loaded)
-                                    }
-
                                     onVisibleChanged: {
                                         opacity = visible ? 1 : 0
-                                    }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "Play Game"
-                                        color: "white"
-                                        font.pixelSize: parent.height * 0.4
-                                        font.bold: true
                                     }
                                 }
                             }
@@ -1232,7 +1184,7 @@ FocusScope {
 
                     Text {
                         id: developer_text
-                        text: formatGameDeveloper(currentgame.developer)
+                        text: Utils.formatGameDeveloper(currentgame.developer)
                         color: "white"
                         font.bold: true
                         font.pixelSize: root.width * 0.012
@@ -1249,7 +1201,7 @@ FocusScope {
 
                     Text {
                         id: releaseyear_text
-                        text: getReleaseYearText(currentgame.releaseYear)
+                        text: Utils.getReleaseYearText(currentgame.releaseYear)
                         color: "white"
                         font.bold: true
                         font.pixelSize: root.width * 0.012
@@ -1266,7 +1218,7 @@ FocusScope {
 
                     Text {
                         id: genre_text
-                        text: formatGameGenre(currentgame.genre)
+                        text: Utils.formatGameGenre(currentgame.genre)
                         color: "white"
                         font.bold: true
                         font.pixelSize: root.width * 0.012
@@ -1290,9 +1242,9 @@ FocusScope {
                         spacing: 2
 
                         Repeater {
-                            model: displayRating(currentgame.rating).split(" ").length
+                            model: Utils.displayRating(currentgame.rating).split(" ").length
                             Image {
-                                source: displayRating(currentgame.rating).split(" ")[index]
+                                source: Utils.displayRating(currentgame.rating).split(" ")[index]
                                 width: root.width * 0.012
                                 height: width
                                 mipmap: true
@@ -1316,13 +1268,13 @@ FocusScope {
 
                         Repeater {
                             model: {
-                                var playersContent = getPlayersContent(currentgame.players);
+                                var playersContent = Utils.getPlayersContent(currentgame.players);
                                 return playersContent ? playersContent.count : 0;
                             }
 
                             Image {
                                 source: {
-                                    var playersContent = getPlayersContent(currentgame.players);
+                                    var playersContent = Utils.getPlayersContent(currentgame.players);
                                     return playersContent ? playersContent.source : "";
                                 }
                                 width: root.width * 0.012
@@ -1349,7 +1301,7 @@ FocusScope {
 
                 Text {
                     id: descripText
-                    text: formatGameDescription(currentgame.description)
+                    text: Utils.formatGameDescription(currentgame.description)
                     width: parent.width * 0.6
                     wrapMode: Text.Wrap
                     font.pixelSize: root.width * 0.012
