@@ -5,6 +5,8 @@ import SortFilterProxyModel 0.2
 import QtMultimedia 5.15
 import "utils.js" as Utils
 import "qrc:/qmlutils" as PegasusUtils
+import "ColorMapping.js" as ColorMapping
+import "gameSystems.js" as GameSystems
 
 FocusScope {
     id: root
@@ -90,7 +92,7 @@ FocusScope {
     }
 
     function updateCurrentColor() {
-        currentColor = Utils.colorMapping[currentShortName] || "#333333";
+        currentColor = ColorMapping.getColor(currentShortName);  // Updated this line
         gradientCanvas.requestPaint();
     }
 
@@ -1325,7 +1327,7 @@ FocusScope {
         var description = "None";
         var gameCount = 0;
 
-        var systemData = Utils.getSystemMetadata(currentShortName);
+        var systemData = GameSystems.getSystemMetadata(currentShortName);  // Changed from Utils to GameSystems
         if (systemData) {
             systemName = systemData.systemName;
             releaseYear = systemData.releaseYear.toString();
