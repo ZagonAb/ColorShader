@@ -1134,9 +1134,16 @@ FocusScope {
     Item {
         id: leftColumn
         width: parent.width * 0.80
-        height: parent.height * 0.50
+        height: parent.height * 0.51
         visible: gamesGridVisible
         clip: true
+
+        anchors {
+            left: parent.left
+            leftMargin: parent.width * 0.03
+            top: parent.top
+            topMargin: root.height * 0.01
+        }
 
         opacity: themeContainerOpacity
 
