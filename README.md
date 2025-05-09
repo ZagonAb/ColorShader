@@ -1,7 +1,7 @@
 
 ## ColorShader
 
-- **Un tema moderno para Pegasus Frontend, diseñado para ofrecer una interfaz de juegos elegante y receptiva.**
+- **Un tema para Pegasus Frontend, diseñado para ofrecer una interfaz de juegos elegante y receptiva.**
 
 ![screen](https://github.com/ZagonAb/ColorShader/blob/d0c57585d9fb631c02d70102718a997ddbe5de68/.meta/screenshots/screen.png)
 ![screen1](https://github.com/ZagonAb/ColorShader/blob/d0c57585d9fb631c02d70102718a997ddbe5de68/.meta/screenshots/screen1.png)
