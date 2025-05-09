@@ -13,7 +13,7 @@
 
 ## Personalización
 
-- Colores: Editar `colorMapping` en `ColorMapping.js`
+- Colores: Editar `ColorMapping.js`
 
 ## Controles
 
