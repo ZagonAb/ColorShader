@@ -47,12 +47,11 @@ function formatGameGenre(genre) {
         return "Unknown genre";
     }
 
-    const maxLength = 40;
-    if (genre.length <= maxLength) {
-        return genre;
-    } else {
-        return genre.substring(0, maxLength - 3) + "...";
-    }
+    const firstGenre = genre.split(/[\/,\-]/)[0].trim();
+    const maxLength = 20;
+    return firstGenre.length <= maxLength
+    ? firstGenre
+    : firstGenre.substring(0, maxLength - 3) + "...";
 }
 
 function displayRating(rating) {

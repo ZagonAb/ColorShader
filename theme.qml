@@ -7,6 +7,7 @@ import "utils.js" as Utils
 import "qrc:/qmlutils" as PegasusUtils
 import "ColorMapping.js" as ColorMapping
 import "gameSystems.js" as GameSystems
+import "./Components" as Components
 
 FocusScope {
     id: root
@@ -21,200 +22,30 @@ FocusScope {
     property var colorMap: ({})
     property string currentColor: "#333333"
     property var currentgame: null
-    property bool screensaverActive: false
-    property int inactivityTimeout: 60000
+    property bool screensaverActive: screensaver.screensaverActive
+    property int inactivityTimeout: 240000
     property var randomScreenshots: []
-    property int currentScreenshotIndex: 0
-    property bool showImage1: true
     property real themeContainerOpacity: 1.0
 
-    Timer {
-        id: inactivityTimer
-        interval: inactivityTimeout
-        running: !screensaverActive
-        onTriggered: {
-            screensaverActive = true;
-            startScreensaver();
-        }
-    }
-
-    function resetInactivityTimer() {
-        inactivityTimer.restart();
-    }
-
-    function startScreensaver() {
-        themeContainerOpacity = 0.0;
-        randomScreenshots = Utils.getRandomScreenshots(api.collections);
-        if (randomScreenshots.length > 0) {
-            currentScreenshotIndex = 0;
-            showNextScreenshot();
-        }
-    }
-
-    function stopScreensaver() {
-        screensaverActive = false;
-        themeContainerOpacity = 1.0;
-        screenshotTransition.stop();
-        screenshotImage1.opacity = 0;
-        screenshotImage2.opacity = 0;
-    }
-
-    function showNextScreenshot() {
-        if (screensaverActive && randomScreenshots.length > 0) {
-            if (currentScreenshotIndex >= randomScreenshots.length) {
-                currentScreenshotIndex = 0;
-            }
-
-            var game = Utils.getGameFromScreenshot(api.collections, randomScreenshots[currentScreenshotIndex]);
-
-            if (showImage1) {
-                screenshotImage2.source = randomScreenshots[currentScreenshotIndex];
-                screenshotImage1.opacity = 0;
-                screenshotImage2.opacity = 1;
-            } else {
-                screenshotImage1.source = randomScreenshots[currentScreenshotIndex];
-                screenshotImage2.opacity = 0;
-                screenshotImage1.opacity = 1;
-            }
-
-            if (game && game.assets.logo) {
-                gameLogo1.source = game.assets.logo;
-            } else {
-                gameLogo1.source = "";
-            }
-
-            currentScreenshotIndex++;
-            showImage1 = !showImage1;
-            screenshotTransition.restart();
-        } else if (randomScreenshots.length === 0) {
-            stopScreensaver();
-        }
-    }
 
     function updateCurrentColor() {
-        currentColor = ColorMapping.getColor(currentShortName);  // Updated this line
+        currentColor = ColorMapping.getColor(currentShortName);
         gradientCanvas.requestPaint();
     }
 
-    function getBatteryIcon() {
-        return Utils.getBatteryIcon(api.device.batteryPercent, api.device.batteryCharging);
-    }
-
-    Timer {
-        id: screenshotTransition
-        interval: 5000
-        running: screensaverActive
-        repeat: true
-        onTriggered: showNextScreenshot()
-    }
-
-    Rectangle {
-        id: imagesScreenshots
-        color: "transparent"
-        width: parent.width
-        height: parent.height
-        z: 1001
-
-        Image {
-            id: screenshotImage1
-            width: parent.width * 1.05
-            height: parent.height * 1.05
-            opacity: 0
-            fillMode: Image.Stretch
-            scale: 1.2
-
-            Behavior on opacity {
-                NumberAnimation { duration: 1000 }
-            }
-
-            SequentialAnimation on x {
-                loops: Animation.Infinite
-                PropertyAnimation {
-                    from: 0
-                    to: parent.width - screenshotImage1.width
-                    duration: 5000
-                }
-                PropertyAnimation {
-                    from: parent.width - screenshotImage1.width
-                    to: 0
-                    duration: 5000
-                }
-            }
-        }
-
-        Image {
-            id: screenshotImage2
-            width: parent.width * 1.05
-            height: parent.height * 1.05
-            opacity: 0
-            fillMode: Image.Stretch
-            scale: 1.2
-
-            Behavior on opacity {
-                NumberAnimation { duration: 1000 }
-            }
-
-            SequentialAnimation on x {
-                loops: Animation.Infinite
-                PropertyAnimation {
-                    from: 0
-                    to: parent.width - screenshotImage2.width
-                    duration: 10000
-                }
-                PropertyAnimation {
-                    from: parent.width - screenshotImage2.width
-                    to: 0
-                    duration: 10000
-                }
-            }
-        }
-
-        Image {
-            width: parent.width
-            height: parent.height
-            fillMode: Image.Stretch
-            source: "assets/scanline-png/crt.png"
-            visible: screensaverActive
-            opacity: screensaverActive ? 1 : 0.8
-            Behavior on opacity {
-                NumberAnimation { duration: 1000 }
-            }
-            mipmap: true
-        }
-
-        Image {
-            id: gameLogo1
-            width: parent.width * 0.5
-            height: width * 0.5
-            anchors {
-                right: parent.right
-                bottom: parent.bottom
-                margins: 20
-            }
-            fillMode: Image.PreserveAspectFit
-            opacity: screensaverActive ? 1 : 0
-            Behavior on opacity {
-                NumberAnimation { duration: 1000 }
-            }
-        }
+    function getGameFromScreenshot(screenshot) {
+        return Utils.getGameFromScreenshot(api.collections, screenshot);
     }
 
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
         onPositionChanged: {
-            if (screensaverActive) {
-                stopScreensaver();
+            if (screensaver.screensaverActive) {
+                screensaver.stopScreensaver();
             }
-            resetInactivityTimer();
+            screensaver.resetInactivityTimer();
         }
-    }
-
-    Keys.onPressed: {
-        if (screensaverActive) {
-            stopScreensaver();
-        }
-        resetInactivityTimer();
     }
 
     SoundEffect {
@@ -243,6 +74,32 @@ FocusScope {
 
     Component.onCompleted: {
         updateCurrentColor();
+        screensaver.randomScreenshots = Utils.getRandomScreenshots(api.collections);
+    }
+
+    Components.Screensaver {
+        id: screensaver
+        inactivityTimeout: root.inactivityTimeout
+        visible: screensaverActive
+
+        onScreensaverStarted: {
+            themeContainerOpacity = 0.0;
+        }
+
+        onScreensaverStopped: {
+            themeContainerOpacity = 1.0;
+        }
+
+        function getGameFromScreenshot(screenshot) {
+            return Utils.getGameFromScreenshot(api.collections, screenshot);
+        }
+    }
+
+    Keys.onPressed: {
+        if (screensaver.screensaverActive) {
+            screensaver.stopScreensaver();
+        }
+        screensaver.resetInactivityTimer();
     }
 
     Rectangle {
@@ -469,23 +326,23 @@ FocusScope {
                         }
                     }
 
-                    if (root.screensaverActive) {
-                        root.stopScreensaver();
+                    if (screensaver.screensaverActive) {
+                        screensaver.stopScreensaver();
                     }
                 }
-                root.resetInactivityTimer();
+                screensaver.resetInactivityTimer();
             }
 
             Keys.onLeftPressed: {
                 if (currentIndex > 0) {
                     currentIndex--;
-                    changeSound.play();
+                    changeSound.play()
                 }
 
-                if (root.screensaverActive) {
-                    root.stopScreensaver();
+                if (screensaver.screensaverActive) {
+                    screensaver.stopScreensaver();
                 }
-                root.resetInactivityTimer();
+                screensaver.resetInactivityTimer();
             }
 
             Keys.onRightPressed: {
@@ -494,10 +351,10 @@ FocusScope {
                     changeSound.play();
                 }
 
-                if (root.screensaverActive) {
-                    root.stopScreensaver();
+                if (screensaver.screensaverActive) {
+                    screensaver.stopScreensaver();
                 }
-                root.resetInactivityTimer();
+                screensaver.resetInactivityTimer();
             }
         }
 
@@ -669,7 +526,7 @@ FocusScope {
                                     id: fastBlur
                                     anchors.fill: parent
                                     source: boxfront
-                                    radius: selected ? 0 : 10
+                                    radius: selected ? 0 : 40
                                     opacity: selected ? 0 : 1
                                     visible: opacity > 0 && (!videoLoader.item || !videoLoader.item.videoOutput.visible)
 
@@ -917,10 +774,10 @@ FocusScope {
                         changeSound.play()
                     }
 
-                    if (root.screensaverActive) {
-                        root.stopScreensaver();
+                    if (screensaver.screensaverActive) {
+                        screensaver.stopScreensaver();
                     }
-                    root.resetInactivityTimer();
+                    screensaver.resetInactivityTimer();
                 }
 
                 Keys.onRightPressed: {
@@ -929,31 +786,40 @@ FocusScope {
                         changeSound.play()
                     }
 
-                    if (root.screensaverActive) {
-                        root.stopScreensaver();
+                    if (screensaver.screensaverActive) {
+                        screensaver.stopScreensaver();
                     }
-                    root.resetInactivityTimer();
+                    screensaver.resetInactivityTimer();
                 }
 
                 Keys.onPressed: {
-                    if (!event.isAutoRepeat && api.keys.isCancel(event)) {
-                        event.accepted = true;
-                        mainMenuVisible = true;
-                        mainMenuFocused = true;
-                        gamesGridVisible = false;
-                        gamesGridFocused = false;
-                        backSound.play();
+                    if (!event.isAutoRepeat) {
+                        if (api.keys.isCancel(event)) {
+                            event.accepted = true;
+                            mainMenuVisible = true;
+                            mainMenuFocused = true;
+                            gamesGridVisible = false;
+                            gamesGridFocused = false;
+                            backSound.play();
 
-                        if (root.screensaverActive) {
-                            root.stopScreensaver();
+                            if (screensaver.screensaverActive) {
+                                screensaver.stopScreensaver();
+                            }
+                        }
+                        else if (api.keys.isAccept(event)) {
+                            event.accepted = true;
+                            if (currentgame) {
+                                api.memory.set('lastPlayedGame', currentgame);
+                                currentgame.launch();
+                            }
                         }
                     }
-                    root.resetInactivityTimer();
+                    screensaver.resetInactivityTimer();
                 }
             }
         }
 
-        Rectangle {
+        /*Rectangle {
             id: bottomRectangle
             width: parent.width
             height: parent.height * 0.33
@@ -1012,318 +878,60 @@ FocusScope {
                     }
                 }
             }
+        }*/
+
+        CollectionLogo {
+            id: collectionLogo
+            anchors.top: collectionsListView.bottom
+            visible: mainMenuVisible
+            currentShortName: root.currentShortName
+            collectionDescription: root.collectionDescription
         }
     }
 
-    Item {
+
+
+    TopBar {
         id: topBar
-        width: parent.width
-        height: root.height * 0.060
+        themeContainerOpacity: root.themeContainerOpacity
+        gamesGridVisible: root.gamesGridVisible
+        currentShortName: root.currentShortName
+
         anchors {
             top: parent.top
             topMargin: 20
         }
+    }
 
+    GameInfoView {
+        id: ganeinfoview
+        currentgame: root.currentgame
+        visible: gamesGridVisible
         opacity: themeContainerOpacity
+
+        anchors {
+            top: parent.top
+            left: parent.left
+            leftMargin: parent ? parent.width * 0.03 : 0
+            topMargin: parent ? parent.height * 0.03 : 0
+        }
 
         Behavior on opacity {
             NumberAnimation { duration: 1000 }
         }
-
-        Row {
-            id: topRow
-            width: parent.width
-            height: parent.height
-            anchors.margins: 10
-            spacing: 10
-
-            Item { width: root.width * 0.015; height: 60 }
-
-            Text {
-                id: clock
-                color: "white"
-                font.pixelSize: root.width * 0.02
-                font.bold: true
-                visible: true
-                horizontalAlignment: Text.AlignLeft
-                width: contentWidth
-                anchors.verticalCenter: parent.verticalCenter
-                x: gamesGridVisible ? root.width * 0.80 : root.width * 0.015;
-                function formatTime() {
-                    let date = new Date();
-                    let hours = date.getHours();
-                    let minutes = date.getMinutes();
-                    let ampm = hours >= 12 ? "PM" : "AM";
-                    hours = hours % 12;
-                    hours = hours ? hours : 12;
-                    let minutesStr = minutes < 10 ? "0" + minutes : minutes;
-                    return hours + ":" + minutesStr + " " + ampm;
-                }
-                text: formatTime()
-                Timer {
-                    running: true
-                    interval: 1000
-                    repeat: true
-                    onTriggered: clock.text = clock.formatTime()
-                }
-            }
-
-            Item { width: parent.width - clock.width - batteryIcon.width - 20; height: 60 }
-
-            Image {
-                id: batteryIcon
-                source: getBatteryIcon()
-                width: root.width * 0.20
-                height: root.height * 0.03
-                fillMode: Image.PreserveAspectFit
-                mipmap: true
-                asynchronous: true
-                visible: true
-                anchors.verticalCenter: parent.verticalCenter
-                Timer {
-                    id: batteryUpdateTimer
-                    triggeredOnStart: true
-                    interval: 5000
-                    running: true
-                    repeat: true
-                    onTriggered: batteryIcon.source = getBatteryIcon()
-                }
-            }
-
-            Item { width: root.width * 0.010; height: 60 }
-        }
     }
 
-    Item {
+    LogoContainer {
         id: logoContainer
-        width: parent.width * 0.4
-        height: parent.height * 0.3
+        themeContainerOpacity: root.themeContainerOpacity
+        currentShortName: root.currentShortName
+        visibleState: gamesGridVisible && gamesGridFocused
 
         anchors {
             top: topBar.bottom
             right: parent.right
             topMargin: 20
             rightMargin: parent.width * 0.05
-        }
-
-        visible: gamesGridVisible && gamesGridFocused
-        opacity: 0.1 * themeContainerOpacity
-
-        Behavior on opacity {
-            NumberAnimation { duration: 1000 }
-        }
-
-        Image {
-            id: logoImage2
-            source: "assets/logos/" + currentShortName + ".png"
-            width: parent.width
-            height: parent.height
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-            mipmap: true
-            anchors.centerIn: parent
-
-            onStatusChanged: {
-                if (status === Image.Error) {
-                    console.log("Error cargando la imagen del logo.");
-                }
-            }
-        }
-    }
-
-    Item {
-        id: leftColumn
-        width: parent.width * 0.80
-        height: parent.height * 0.51
-        visible: gamesGridVisible
-        clip: true
-
-        anchors {
-            left: parent.left
-            leftMargin: parent.width * 0.03
-            top: parent.top
-            topMargin: root.height * 0.01
-        }
-
-        opacity: themeContainerOpacity
-
-        Behavior on opacity {
-            NumberAnimation { duration: 1000 }
-        }
-
-        Column {
-            anchors.fill: parent
-            anchors.leftMargin: root.width * 0.020
-            anchors.topMargin: root.height * 0.010
-            spacing: 20
-
-            Item {
-                width: root.width * 0.30
-                height: root.height * 0.20
-
-                Image {
-                    id: gameLogo
-                    anchors.fill: parent
-                    source: currentgame.assets.logo
-                    fillMode: Image.PreserveAspectFit
-                    mipmap: true
-                    visible: status !== Image.Error
-                }
-
-                Image {
-                    id: fallbackImage
-                    anchors.fill: parent
-                    source: "assets/logos/default.png"
-                    fillMode: Image.PreserveAspectFit
-                    mipmap: true
-                    visible: gameLogo.status === Image.Error
-                }
-            }
-
-            Row {
-                spacing: 10
-
-                Rectangle {
-                    id: text_developer
-                    width: developer_text.width + 20
-                    height: developer_text.height + 6
-                    color: Qt.rgba(0, 0, 0, 0.5)
-                    border.color: "white"
-                    border.width: 2
-
-                    Text {
-                        id: developer_text
-                        text: Utils.formatGameDeveloper(currentgame.developer)
-                        color: "white"
-                        font.bold: true
-                        font.pixelSize: root.width * 0.012
-                        anchors.centerIn: parent
-                    }
-                }
-
-                Rectangle {
-                    width: releaseyear_text.width + 20
-                    height: releaseyear_text.height + 6
-                    color: Qt.rgba(0, 0, 0, 0.5)
-                    border.color: "white"
-                    border.width: 2
-
-                    Text {
-                        id: releaseyear_text
-                        text: Utils.getReleaseYearText(currentgame.releaseYear)
-                        color: "white"
-                        font.bold: true
-                        font.pixelSize: root.width * 0.012
-                        anchors.centerIn: parent
-                    }
-                }
-
-                Rectangle {
-                    width: genre_text.width + 20
-                    height: genre_text.height + 6
-                    color: Qt.rgba(0, 0, 0, 0.5)
-                    border.color: "white"
-                    border.width: 2
-
-                    Text {
-                        id: genre_text
-                        text: Utils.formatGameGenre(currentgame.genre)
-                        color: "white"
-                        font.bold: true
-                        font.pixelSize: root.width * 0.012
-                        anchors.centerIn: parent
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        elide: Text.ElideMiddle
-                    }
-                }
-
-                Rectangle {
-                    id: ratingContainer
-                    width: rating_content.width + 20
-                    height: text_developer.height
-                    color: Qt.rgba(0, 0, 0, 0.5)
-                    border.color: "white"
-                    border.width: 2
-
-                    Row {
-                        id: rating_content
-                        anchors.centerIn: parent
-                        spacing: 2
-
-                        Repeater {
-                            model: Utils.displayRating(currentgame.rating).split(" ").length
-                            Image {
-                                source: Utils.displayRating(currentgame.rating).split(" ")[index]
-                                width: root.width * 0.012
-                                height: width
-                                mipmap: true
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    width: players_content.width + 20
-                    height: text_developer.height
-                    color: Qt.rgba(0, 0, 0, 0.5)
-                    border.color: "white"
-                    border.width: 2
-                    visible: currentgame.players > 1
-
-                    Row {
-                        id: players_content
-                        anchors.centerIn: parent
-                        spacing: 2
-
-                        Repeater {
-                            model: {
-                                var playersContent = Utils.getPlayersContent(currentgame.players);
-                                return playersContent ? playersContent.count : 0;
-                            }
-
-                            Image {
-                                source: {
-                                    var playersContent = Utils.getPlayersContent(currentgame.players);
-                                    return playersContent ? playersContent.source : "";
-                                }
-                                width: root.width * 0.012
-                                height: width
-                                fillMode: Image.PreserveAspectFit
-                                mipmap: true
-                            }
-                        }
-                    }
-                }
-            }
-
-            PegasusUtils.AutoScroll {
-                id: autoscroll
-                anchors {
-                    left: parent.left
-                    right: parent.right
-                }
-
-                pixelsPerSecond: 50
-                scrollWaitDuration: 3000
-
-                height: parent.height * 0.35
-
-                Text {
-                    id: descripText
-                    text: Utils.formatGameDescription(currentgame.description)
-                    width: parent.width * 0.6
-                    wrapMode: Text.Wrap
-                    font.pixelSize: root.width * 0.012
-                    color: "white"
-                    layer.enabled: true
-                    layer.effect: DropShadow {
-                        color: "black"
-                        radius: 2
-                        samples: 5
-                        spread: 0.5
-                    }
-                }
-            }
         }
     }
 
