@@ -615,7 +615,7 @@ FocusScope {
                                     id: logoOverlay
                                     anchors.centerIn: parent
                                     source: game ? game.assets.logo : ""
-                                    width: parent.width * 0.6
+                                    width: parent.width * 0.7
                                     height: width
                                     opacity: selected ? 0 : 1
                                     fillMode: Image.PreserveAspectFit
@@ -819,67 +819,6 @@ FocusScope {
             }
         }
 
-        /*Rectangle {
-            id: bottomRectangle
-            width: parent.width
-            height: parent.height * 0.33
-            anchors.top: collectionsListView.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            color: "transparent"
-            anchors.topMargin: 25
-            visible: mainMenuVisible
-
-            Image {
-                id: logoImage
-                source: "assets/logos/" + currentShortName + ".png"
-                width: parent.width * 0.3
-                height: parent.height * 0.8
-                fillMode: Image.PreserveAspectFit
-                asynchronous: true
-                mipmap: true
-                opacity: 0
-
-                Behavior on opacity {
-                    OpacityAnimator { duration: 1500 }
-                }
-                onSourceChanged: {
-                    logoImage.opacity = 0
-                    logoImage.opacity = 0.7
-                    logoText.opacity = 0
-                    logoText.opacity = 0.7
-                }
-
-                anchors.left: parent.left
-                anchors.leftMargin: root.width *0.080
-                anchors.top: parent.top
-                anchors.topMargin: 20
-            }
-
-            Item {
-                id: descriptionText
-                width: (parent.width / 2) + (parent.width * 0.1)
-                height: parent.height
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.bottom: parent.bottom
-
-                Text {
-                    id: logoText
-                    width: parent.width * 0.90
-                    text: collectionDescription
-                    color: "white"
-                    font.pixelSize: root.width * 0.012
-                    wrapMode: Text.WordWrap
-                    anchors.centerIn: parent
-                    horizontalAlignment: Text.AlignHCenter
-                    opacity: 0
-                    Behavior on opacity {
-                        OpacityAnimator { duration: 1500 }
-                    }
-                }
-            }
-        }*/
-
         CollectionLogo {
             id: collectionLogo
             anchors.top: collectionsListView.bottom
@@ -888,8 +827,6 @@ FocusScope {
             collectionDescription: root.collectionDescription
         }
     }
-
-
 
     TopBar {
         id: topBar
