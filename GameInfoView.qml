@@ -60,7 +60,7 @@ Item {
                     text: currentgame ? Utils.formatGameDeveloper(currentgame.developer) : ""
                     color: "white"
                     font.bold: true
-                    font.pixelSize: parent.height * 0.4
+                    font.pixelSize: parent.height * 0.45
                     anchors.centerIn: parent
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
@@ -82,7 +82,7 @@ Item {
                     text: currentgame ? Utils.getReleaseYearText(currentgame.releaseYear) : ""
                     color: "white"
                     font.bold: true
-                    font.pixelSize: parent.height * 0.4
+                    font.pixelSize: parent.height * 0.45
                     anchors.centerIn: parent
                 }
             }
@@ -100,7 +100,7 @@ Item {
                     text: currentgame ? Utils.formatGameGenre(currentgame.genre) : ""
                     color: "white"
                     font.bold: true
-                    font.pixelSize: parent.height * 0.35
+                    font.pixelSize: parent.height * 0.45
                     anchors {
                         verticalCenter: parent.verticalCenter
                         left: parent.left
