@@ -6,7 +6,7 @@ import "qrc:/qmlutils" as PegasusUtils
 Item {
     id: gameInfoViewRoot
     width: parent.width * 0.8
-    height: parent.height * 0.6
+    height: parent.height * 0.55
     visible: parent ? parent.gamesGridVisible : false
     clip: true
 
@@ -183,31 +183,97 @@ Item {
             }
         }
 
-        PegasusUtils.AutoScroll {
-            id: autoscroll
-
+        Item {
+            id: scrollContainer
             anchors {
                 left: parent.left
                 right: parent.right
             }
-
-            pixelsPerSecond: 50
-            scrollWaitDuration: 3000
-            height: parent.height * 0.35
-
-            Text {
-                id: descripText
-                text: currentgame ? Utils.formatGameDescription(currentgame.description) : ""
-                width: parent.width * 0.6
-                wrapMode: Text.Wrap
-                font.pixelSize: parent.width * 0.015
-                color: "white"
+            height: parent.height * 0.4
+            clip: true
+            Rectangle {
+                id: fadeContainer
+                anchors.fill: parent
+                color: "transparent"
                 layer.enabled: true
-                layer.effect: DropShadow {
-                    color: "black"
-                    radius: 2
-                    samples: 5
-                    spread: 0.5
+                layer.effect: OpacityMask {
+                    maskSource: Item {
+                        width: fadeContainer.width
+                        height: fadeContainer.height
+                        Rectangle {
+                            anchors.top: parent.top
+                            width: parent.width
+                            height: parent.height * 0.15
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: "#00FFFFFF" }
+                                GradientStop { position: 1.0; color: "#FFFFFFFF" }
+                            }
+                        }
+                        Rectangle {
+                            y: parent.height * 0.15
+                            width: parent.width
+                            height: parent.height * 0.7
+                            color: "#FFFFFFFF"
+                        }
+                        Rectangle {
+                            anchors.bottom: parent.bottom
+                            width: parent.width
+                            height: parent.height * 0.15
+                            gradient: Gradient {
+                                GradientStop { position: 0.0; color: "#FFFFFFFF" }
+                                GradientStop { position: 1.0; color: "#00FFFFFF" }
+                            }
+                        }
+                    }
+                }
+                PegasusUtils.AutoScroll {
+                    id: autoscroll
+                    anchors.fill: parent
+                    pixelsPerSecond: 50
+                    scrollWaitDuration: 3000
+
+                    Item {
+                        width: autoscroll.width
+                        height: childrenRect.height + topPadding + bottomPadding
+
+                        property real topPadding: autoscroll.height * 0.03
+                        property real bottomPadding: autoscroll.height * 0.03
+                        property real sidePadding: autoscroll.width * 0.05
+
+                        Item {
+                            id: topSpacer
+                            width: parent.width
+                            height: parent.topPadding
+                        }
+
+                        Text {
+                            id: descripText
+                            anchors {
+                                top: topSpacer.bottom
+                                left: parent.left
+                                leftMargin: parent.width * 0.01
+                            }
+                            text: currentgame ? Utils.formatGameDescription(currentgame.description) : ""
+                            width: parent.width * 0.6 - (parent.sidePadding * 2)
+                            wrapMode: Text.Wrap
+                            font.pixelSize: autoscroll.width * 0.015
+                            color: "white"
+                            layer.enabled: true
+                            layer.effect: DropShadow {
+                                color: "black"
+                                radius: 2
+                                samples: 5
+                                spread: 0.5
+                            }
+                        }
+
+                        Item {
+                            id: bottomSpacer
+                            anchors.top: descripText.bottom
+                            width: parent.width
+                            height: parent.bottomPadding
+                        }
+                    }
                 }
             }
         }
