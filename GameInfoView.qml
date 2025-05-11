@@ -5,12 +5,14 @@ import "qrc:/qmlutils" as PegasusUtils
 
 Item {
     id: gameInfoViewRoot
-    width: parent.width * 0.8
-    height: parent.height * 0.55
+    width: parent.width * 0.50
+    height: parent.height * 0.50
     visible: parent ? parent.gamesGridVisible : false
     clip: true
 
     property var currentgame
+
+
 
     Column {
         anchors.fill: parent
@@ -254,9 +256,9 @@ Item {
                                 leftMargin: parent.width * 0.01
                             }
                             text: currentgame ? Utils.formatGameDescription(currentgame.description) : ""
-                            width: parent.width * 0.6 - (parent.sidePadding * 2)
+                            width: parent.width - (parent.sidePadding * 2)
                             wrapMode: Text.Wrap
-                            font.pixelSize: autoscroll.width * 0.015
+                            font.pixelSize: autoscroll.width * 0.025
                             color: "white"
                             layer.enabled: true
                             layer.effect: DropShadow {
@@ -279,4 +281,3 @@ Item {
         }
     }
 }
-

@@ -826,6 +826,54 @@ FocusScope {
             currentShortName: root.currentShortName
             collectionDescription: root.collectionDescription
         }
+
+        ActionBar {
+            id: gameActionBar
+
+            anchors {
+                top: parent.top
+                topMargin: parent.height * 0.43
+                right: parent.right
+                rightMargin: parent.width * 0.03
+            }
+            width: parent.width * 0.4
+            height: parent.height * 0.07
+            visible: gamesGridVisible
+            opacity: themeContainerOpacity
+
+            // Conecta las señales a las acciones correspondientes
+            onFavoriteClicked: {
+                // Implementar lógica para marcar como favorito
+                console.log("Favorito marcado:", currentgame ? currentgame.title : "")
+            }
+
+            onFilterClicked: {
+                // Implementar lógica para filtrar juegos
+                console.log("Filtrar juegos")
+            }
+
+            onLaunchClicked: {
+                // Lanzar el juego actual
+                if (currentgame) {
+                    api.memory.set('lastPlayedGame', currentgame)
+                    currentgame.launch()
+                }
+            }
+
+            onBackClicked: {
+                // Volver al menú principal
+                mainMenuVisible = true
+                mainMenuFocused = true
+                gamesGridVisible = false
+                gamesGridFocused = false
+                backSound.play()
+            }
+
+            // Animación para aparecer/desaparecer suavemente
+            Behavior on opacity {
+                NumberAnimation { duration: 500 }
+            }
+        }
     }
 
     TopBar {
@@ -868,7 +916,7 @@ FocusScope {
             top: topBar.bottom
             right: parent.right
             topMargin: 20
-            rightMargin: parent.width * 0.05
+            rightMargin: parent.width * 0.03
         }
     }
 
