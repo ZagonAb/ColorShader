@@ -19,6 +19,8 @@ FocusScope {
     property bool gamesGridFocused: false
     property string currentShortName: ""
     property string collectionDescription: ""
+    property string collectionSystemInfo: ""
+
     property var colorMap: ({})
     property string currentColor: "#333333"
     property var currentgame: null
@@ -26,6 +28,10 @@ FocusScope {
     property int inactivityTimeout: 240000
     property var randomScreenshots: []
     property real themeContainerOpacity: 1.0
+
+    SoundEffects {
+        id: soundEffects
+    }
 
 
     function updateCurrentColor() {
@@ -35,41 +41,6 @@ FocusScope {
 
     function getGameFromScreenshot(screenshot) {
         return Utils.getGameFromScreenshot(api.collections, screenshot);
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        hoverEnabled: true
-        onPositionChanged: {
-            if (screensaver.screensaverActive) {
-                screensaver.stopScreensaver();
-            }
-            screensaver.resetInactivityTimer();
-        }
-    }
-
-    SoundEffect {
-        id: changeSound
-        source: "assets/sound/change.wav"
-        volume: 0.5
-    }
-
-    SoundEffect {
-        id: goSound
-        source: "assets/sound/go.wav"
-        volume: 0.5
-    }
-
-    SoundEffect {
-        id: backSound
-        source: "assets/sound/back.wav"
-        volume: 0.5
-    }
-
-    SoundEffect {
-        id: playSound
-        source: "assets/sound/go.wav"
-        volume: 1.0
     }
 
     Component.onCompleted: {
@@ -100,6 +71,17 @@ FocusScope {
             screensaver.stopScreensaver();
         }
         screensaver.resetInactivityTimer();
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: {
+            if (screensaver.screensaverActive) {
+                screensaver.stopScreensaver();
+            }
+            screensaver.resetInactivityTimer();
+        }
     }
 
     Rectangle {
@@ -200,7 +182,7 @@ FocusScope {
             delegate: Item {
                 id: itemRectangle
                 property bool selected: ListView.isCurrentItem
-                width: collectionsListView.width * 0.10
+                width: collectionsListView.width * 0.13
                 height: collectionsListView.height * 0.90
                 scale: selected && collectionsListView.focus ? 1.50 : 1.0
 
@@ -218,7 +200,7 @@ FocusScope {
                     NumberAnimation { duration: 500 }
                 }
 
-                opacity: selected ? 1.0 : 0.5
+                opacity: selected ? 1.0 : 0.3
 
                 Image {
                     id: shortNameImage
@@ -283,6 +265,10 @@ FocusScope {
                 gameGrid.model = api.collections.get(currentIndex).games;
                 updateCurrentColor()
                 loadCollectionMetadata()
+
+                if (collectionInfo.autoscroll) {
+                    collectionInfo.autoscroll.restart()
+                }
             }
 
             Component.onCompleted: {
@@ -307,7 +293,7 @@ FocusScope {
                         mainMenuFocused = false;
                         gamesGridVisible = true;
                         gamesGridFocused = true;
-                        goSound.play();
+                        soundEffects.playGo();
                         currentgame = gameGrid.model.get(gameGrid.currentIndex);
                         if (gameGrid.currentItem && gameGrid.currentItem.updateVideoState) {
                             gameGrid.currentItem.updateVideoState();
@@ -316,13 +302,13 @@ FocusScope {
                         event.accepted = true;
                         if (currentIndex < count - 1) {
                             currentIndex++;
-                            changeSound.play();
+                            soundEffects.playChange();
                         }
                     } else if (api.keys.isPrevPage(event)) {
                         event.accepted = true;
                         if (currentIndex > 0) {
                             currentIndex--;
-                            changeSound.play();
+                            soundEffects.playChange();
                         }
                     }
 
@@ -336,7 +322,7 @@ FocusScope {
             Keys.onLeftPressed: {
                 if (currentIndex > 0) {
                     currentIndex--;
-                    changeSound.play()
+                    soundEffects.playChange()
                 }
 
                 if (screensaver.screensaverActive) {
@@ -348,7 +334,7 @@ FocusScope {
             Keys.onRightPressed: {
                 if (currentIndex < count - 1) {
                     currentIndex++;
-                    changeSound.play();
+                    soundEffects.playChange();
                 }
 
                 if (screensaver.screensaverActive) {
@@ -707,7 +693,7 @@ FocusScope {
 
                                         onClicked: {
                                             parent.color = Qt.rgba(0.8, 0.8, 0.8, 0.7);
-                                            playSound.play();
+                                            soundEffects.playPlay();
 
                                             timer.start();
                                         }
@@ -760,7 +746,7 @@ FocusScope {
                 }
 
                 onCurrentIndexChanged: {
-                    changeSound.play();
+                    soundEffects.playChange();
                     var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
                     gamescreenshot.source = selectedGame.assets.screenshot;
                     currentgame = gameGrid.model.get(currentIndex);
@@ -771,7 +757,7 @@ FocusScope {
                 Keys.onLeftPressed: {
                     if (currentIndex > 0) {
                         currentIndex--;
-                        changeSound.play()
+                        soundEffects.playChange()
                     }
 
                     if (screensaver.screensaverActive) {
@@ -783,7 +769,7 @@ FocusScope {
                 Keys.onRightPressed: {
                     if (currentIndex < count - 1) {
                         currentIndex++;
-                        changeSound.play()
+                        soundEffects.playChange()
                     }
 
                     if (screensaver.screensaverActive) {
@@ -800,7 +786,7 @@ FocusScope {
                             mainMenuFocused = true;
                             gamesGridVisible = false;
                             gamesGridFocused = false;
-                            backSound.play();
+                            soundEffects.playBack();
 
                             if (screensaver.screensaverActive) {
                                 screensaver.stopScreensaver();
@@ -819,11 +805,13 @@ FocusScope {
             }
         }
 
-        CollectionLogo {
-            id: collectionLogo
+        CollectionInfo {
+            id: collectionInfo
             anchors.top: collectionsListView.bottom
+            anchors.topMargin: parent.height * 0.05
             visible: mainMenuVisible
             currentShortName: root.currentShortName
+            collectionSystemInfo: root.collectionSystemInfo
             collectionDescription: root.collectionDescription
         }
 
@@ -853,7 +841,6 @@ FocusScope {
             }
 
             onLaunchClicked: {
-                // Lanzar el juego actual
                 if (currentgame) {
                     api.memory.set('lastPlayedGame', currentgame)
                     currentgame.launch()
@@ -866,7 +853,7 @@ FocusScope {
                 mainMenuFocused = true
                 gamesGridVisible = false
                 gamesGridFocused = false
-                backSound.play()
+                soundEffects.playBack()
             }
 
             // Animación para aparecer/desaparecer suavemente
@@ -915,30 +902,20 @@ FocusScope {
         anchors {
             top: topBar.bottom
             right: parent.right
-            topMargin: 20
+            topMargin: 10
             rightMargin: parent.width * 0.03
         }
     }
 
     function loadCollectionMetadata() {
-        var metadataFound = false;
-        var systemName = "None";
-        var releaseYear = "None";
-        var description = "None";
-        var gameCount = 0;
+        var systemData = GameSystems.getSystemMetadata(currentShortName) || {};
+        var gameCount = api.collections.get(collectionsListView.currentIndex).games.count || 0;
 
-        var systemData = GameSystems.getSystemMetadata(currentShortName);  // Changed from Utils to GameSystems
-        if (systemData) {
-            systemName = systemData.systemName;
-            releaseYear = systemData.releaseYear.toString();
-            description = systemData.description;
-            metadataFound = true;
-        }
+        collectionSystemInfo = "┌CONSOLE: " + (systemData.systemName || "None") + "┐┌" +
+        "YEAR: " + (systemData.releaseYear || "None") + "┐┌" +
+        "GAMES: " + gameCount + "┐";
 
-        gameCount = api.collections.get(collectionsListView.currentIndex).games.count;
-
-        collectionDescription = "Release Year: " + releaseYear + "\n" +
-        "Games in your collection: " + gameCount + "\n" +
-        "Description: " + description;
+        collectionDescription = systemData.description || "No description available";
     }
+
 }

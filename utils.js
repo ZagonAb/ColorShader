@@ -119,3 +119,9 @@ function getGameFromScreenshot(collections, screenshot) {
     }
     return null;
 }
+
+function updateTextWidth() {
+    var plainText = systemInfoText.text.replace(/<[^>]*>/g, '');
+    var approximateWidth = plainText.length * (systemInfoText.font.pixelSize * 0.65);
+    collectionInfo.textWidth = approximateWidth;
+}

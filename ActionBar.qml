@@ -69,7 +69,7 @@ Item {
             visible: showLaunch
             width: actionBar.width * 0.2
             iconSource: "assets/icons/launch.png"
-            buttonText: "Launch"
+            buttonText: "Play Game"
 
             onClicked: {
                 buttonSound.play()

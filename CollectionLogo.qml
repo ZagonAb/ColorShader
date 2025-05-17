@@ -1,7 +1,8 @@
 import QtQuick 2.15
+import QtGraphicalEffects 1.12
 
 Rectangle {
-    id: collectionLogo
+    id: collectionInfo
     width: parent.width
     height: parent.height * 0.33
     anchors.top: parent.top
@@ -11,7 +12,6 @@ Rectangle {
     visible: true
 
     property string currentShortName: ""
-    property string collectionDescription: ""
 
     Image {
         id: logoImage
@@ -26,6 +26,7 @@ Rectangle {
         Behavior on opacity {
             OpacityAnimator { duration: 1500 }
         }
+
         onSourceChanged: {
             logoImage.opacity = 0
             logoImage.opacity = 0.7
@@ -39,7 +40,7 @@ Rectangle {
         anchors.topMargin: 20
     }
 
-    Image {
+     Image {
         id: fallbackImage
         width: parent.width * 0.3
         height: parent.height * 0.8
@@ -47,36 +48,13 @@ Rectangle {
         fillMode: Image.PreserveAspectFit
         mipmap: true
         visible: logoImage.status === Image.Error
+         opacity: 0.7
         anchors {
             horizontalCenter: parent.left
             horizontalCenterOffset: parent.width * 0.25
             top: parent.top
             topMargin: 20
         }
-        opacity: 0.7
-    }
+     }
 
-    Item {
-        id: descriptionText
-        width: (parent.width / 2) + (parent.width * 0.1)
-        height: parent.height
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-
-        Text {
-            id: logoText
-            width: parent.width * 0.90
-            text: collectionDescription
-            color: "white"
-            font.pixelSize: width * 0.022
-            wrapMode: Text.WordWrap
-            anchors.centerIn: parent
-            horizontalAlignment: Text.AlignHCenter
-            opacity: 0
-            Behavior on opacity {
-                OpacityAnimator { duration: 1500 }
-            }
-        }
-    }
 }

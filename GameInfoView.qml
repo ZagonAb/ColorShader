@@ -44,14 +44,14 @@ Item {
         }
 
         Row {
-            spacing: 10
+            spacing: parent.width * 0.01
             height: parent.height * 0.06
             width: parent.width * 0.8
 
             Rectangle {
                 id: text_developer
                 width: developer_text.contentWidth + 30
-                height: parent.height
+                height: parent.height + 10
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
                 border.width: 2
@@ -73,7 +73,7 @@ Item {
 
             Rectangle {
                 width: releaseyear_text.contentWidth + 30
-                height: parent.height
+                height: parent.height + 10
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
                 border.width: 2
@@ -91,7 +91,7 @@ Item {
 
             Rectangle {
                 width: Math.min(genre_text.implicitWidth + 30, parent.width * 0.3)
-                height: parent.height
+                height: parent.height + 10
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
                 border.width: 2
@@ -119,7 +119,7 @@ Item {
             Rectangle {
                 id: ratingContainer
                 width: rating_content.width + 30
-                height: parent.height
+                height: parent.height + 10
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
                 border.width: 2
@@ -145,7 +145,7 @@ Item {
 
             Rectangle {
                 width: players_content.width + 30
-                height: parent.height
+                height: parent.height + 10
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
                 border.width: 2
@@ -191,11 +191,12 @@ Item {
                 left: parent.left
                 right: parent.right
             }
-            height: parent.height * 0.4
+            height: parent.height * 0.43
             clip: true
             Rectangle {
                 id: fadeContainer
                 anchors.fill: parent
+                anchors.topMargin: parent.height * 0.05
                 color: "transparent"
                 layer.enabled: true
                 layer.effect: OpacityMask {
@@ -231,7 +232,7 @@ Item {
                 PegasusUtils.AutoScroll {
                     id: autoscroll
                     anchors.fill: parent
-                    pixelsPerSecond: 50
+                    pixelsPerSecond: 15
                     scrollWaitDuration: 3000
 
                     Item {
@@ -273,7 +274,7 @@ Item {
                             id: bottomSpacer
                             anchors.top: descripText.bottom
                             width: parent.width
-                            height: parent.bottomPadding
+                            height: parent.bottomPadding - 10
                         }
                     }
                 }
