@@ -20,7 +20,6 @@ FocusScope {
     property string currentShortName: ""
     property string collectionDescription: ""
     property string collectionSystemInfo: ""
-
     property var colorMap: ({})
     property string currentColor: "#333333"
     property var currentgame: null
@@ -32,7 +31,6 @@ FocusScope {
     SoundEffects {
         id: soundEffects
     }
-
 
     function updateCurrentColor() {
         currentColor = ColorMapping.getColor(currentShortName);
@@ -345,16 +343,17 @@ FocusScope {
         }
 
         Rectangle{
+
             anchors {
                 horizontalCenter: parent.horizontalCenter
                 bottom: parent.bottom
             }
+
             width: parent.width
             height: parent.height / 2
             color: "transparent"
             clip: true
             visible: gamesGridVisible
-
             opacity: themeContainerOpacity
 
             Behavior on opacity {
@@ -829,14 +828,11 @@ FocusScope {
             visible: gamesGridVisible
             opacity: themeContainerOpacity
 
-            // Conecta las señales a las acciones correspondientes
             onFavoriteClicked: {
-                // Implementar lógica para marcar como favorito
                 console.log("Favorito marcado:", currentgame ? currentgame.title : "")
             }
 
             onFilterClicked: {
-                // Implementar lógica para filtrar juegos
                 console.log("Filtrar juegos")
             }
 
@@ -848,7 +844,6 @@ FocusScope {
             }
 
             onBackClicked: {
-                // Volver al menú principal
                 mainMenuVisible = true
                 mainMenuFocused = true
                 gamesGridVisible = false
@@ -856,7 +851,6 @@ FocusScope {
                 soundEffects.playBack()
             }
 
-            // Animación para aparecer/desaparecer suavemente
             Behavior on opacity {
                 NumberAnimation { duration: 500 }
             }
