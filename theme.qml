@@ -28,6 +28,11 @@ FocusScope {
     property var randomScreenshots: []
     property real themeContainerOpacity: 1.0
 
+    property string currentScreenshot: ""
+    property string pendingSource: ""
+    property bool useFirstImage: true
+
+
     SoundEffects {
         id: soundEffects
     }
@@ -116,38 +121,132 @@ FocusScope {
             NumberAnimation { duration: 1000 }
         }
 
-        Image {
-            id: gamescreenshot
+        Item {
+            id: screenshotsContainer
             anchors.top: parent.top
             anchors.right: parent.right
             width: parent.width
             height: parent.height
-            fillMode: Image.Stretch
-            asynchronous: true
-            opacity: 0.2
             visible: gamesGridVisible
-        }
 
-        FastBlur {
-            id: fastBlurEffect
-            source: gamescreenshot
-            anchors.fill: gamescreenshot
-            radius: 80
-            visible: gamesGridVisible
-        }
+            Item {
+                id: container1
+                anchors.fill: parent
+                opacity: useFirstImage ? 1 : 0.5
 
-        LinearGradient {
-            id: gradientLinear
-            visible: gamesGridVisible
-            width: parent.width
-            height: parent.height * 0.25
-            anchors.bottom: gamescreenshot.bottom
-            anchors.right: gamescreenshot.right
-            start: Qt.point(0, height)
-            end: Qt.point(0, 0)
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: "#FF000000" }
-                GradientStop { position: 1.0; color: "#00000000" }
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 800
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+
+                Image {
+                    id: screenshotImage1
+                    anchors.fill: parent
+                    fillMode: Image.Stretch
+                    asynchronous: true
+                    visible: false
+                }
+
+
+                FastBlur {
+                    anchors.fill: parent
+                    source: screenshotImage1
+                    radius: 80
+                    visible: true
+                    cached: true
+                }
+            }
+
+            Item {
+                id: container2
+                anchors.fill: parent
+                opacity: !useFirstImage ? 1 : 0.5
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 800
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+
+                Image {
+                    id: screenshotImage2
+                    anchors.fill: parent
+                    fillMode: Image.Stretch
+                    asynchronous: true
+                    visible: false
+                }
+
+                FastBlur {
+                    anchors.fill: parent
+                    source: screenshotImage2
+                    radius: 80
+                    visible: true
+                    cached: true
+                }
+            }
+
+            LinearGradient {
+                id: gradientLinear
+                visible: true
+                width: parent.width
+                height: parent.height * 0.25
+                anchors.bottom: parent.bottom
+                anchors.right: parent.right
+                start: Qt.point(0, height)
+                end: Qt.point(0, 0)
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#FF000000" }
+                    GradientStop { position: 1.0; color: "#00000000" }
+                }
+                z: 10
+            }
+
+            Timer {
+                id: transitionTimer
+                interval: 50
+                onTriggered: {
+                    if (pendingSource !== "") {
+                        if (useFirstImage) {
+                            screenshotImage1.source = pendingSource;
+                        } else {
+                            screenshotImage2.source = pendingSource;
+                        }
+                        pendingSource = "";
+
+                        Qt.callLater(function() {
+                            if (useFirstImage) {
+                                container2.opacity = 0;
+                                container1.opacity = 1;
+                            } else {
+                                container1.opacity = 0;
+                                container2.opacity = 1;
+                            }
+                        });
+                    }
+                }
+            }
+
+            function setScreenshot(source) {
+                if (source !== currentScreenshot) {
+                    currentScreenshot = source;
+                    pendingSource = source;
+                    useFirstImage = !useFirstImage;
+                    transitionTimer.start();
+                }
+            }
+
+            Component.onCompleted: {
+                if (gameGrid.model && gameGrid.model.count > 0 && gameGrid.currentIndex >= 0) {
+                    var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
+                    if (selectedGame && selectedGame.assets && selectedGame.assets.screenshot) {
+                        screenshotImage1.source = selectedGame.assets.screenshot;
+                        container1.opacity = 0.2;
+                        currentScreenshot = selectedGame.assets.screenshot;
+                    }
+                }
             }
         }
 
@@ -183,6 +282,8 @@ FocusScope {
                 width: collectionsListView.width * 0.13
                 height: collectionsListView.height * 0.90
                 scale: selected && collectionsListView.focus ? 1.50 : 1.0
+                clip: false
+                z: selected ? 1 : 0
 
                 Behavior on scale {
                     NumberAnimation {
@@ -190,9 +291,6 @@ FocusScope {
                         easing.type: Easing.OutQuad
                     }
                 }
-
-                clip: false
-                z: selected ? 1 : 0
 
                 Behavior on opacity {
                     NumberAnimation { duration: 500 }
@@ -747,7 +845,7 @@ FocusScope {
                 onCurrentIndexChanged: {
                     soundEffects.playChange();
                     var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
-                    gamescreenshot.source = selectedGame.assets.screenshot;
+                    screenshotsContainer.setScreenshot(selectedGame.assets.screenshot);
                     currentgame = gameGrid.model.get(currentIndex);
                 }
 
@@ -911,5 +1009,4 @@ FocusScope {
 
         collectionDescription = systemData.description || "No description available";
     }
-
 }
