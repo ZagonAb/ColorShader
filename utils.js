@@ -125,3 +125,30 @@ function updateTextWidth() {
     var approximateWidth = plainText.length * (systemInfoText.font.pixelSize * 0.65);
     collectionInfo.textWidth = approximateWidth;
 }
+
+// Añade al final de utils.js
+function formatLastPlayedDate(lastPlayed) {
+    if (!lastPlayed || lastPlayed.getTime() === 0) {
+        return "Never played";
+    }
+
+    var now = new Date();
+    var diff = now - lastPlayed;
+    var diffDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+        return "Today";
+    } else if (diffDays === 1) {
+        return "Yesterday";
+    } else if (diffDays < 7) {
+        return diffDays + " days ago";
+    } else if (diffDays < 30) {
+        var weeks = Math.floor(diffDays / 7);
+        return weeks + (weeks === 1 ? " week ago" : " weeks ago");
+    } else {
+        return lastPlayed.toLocaleDateString();
+    }
+}
+
+
+

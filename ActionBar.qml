@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
 import QtMultimedia 5.15
+import "GameFilters.js" as GameFilters
 
 Item {
     id: actionBar
@@ -8,11 +9,14 @@ Item {
     height: parent.height * 0.08
     z: 50
 
-    // Propiedades de visibilidad
     property bool showFavorite: true
     property bool showFilter: true
     property bool showLaunch: true
     property bool showBack: true
+
+    property string currentFilter: "All Games"
+    property var availableFilters: ["All Games"]
+    property bool filterButtonEnabled: availableFilters.length > 1
 
     // Señales
     signal favoriteClicked()
@@ -48,22 +52,26 @@ Item {
             }
         }
 
-        // Botón Filtro
         ActionButton {
             id: filterButton
             visible: showFilter
             width: actionBar.width * 0.2
             iconSource: "assets/icons/filter.png"
-            buttonText: "Filter"
+            buttonText: actionBar.currentFilter
+            enabled: filterButtonEnabled
+            opacity: enabled ? 1.0 : 0.3
 
             onClicked: {
+                if (!enabled) return;
                 buttonSound.play()
-                actionBar.filterClicked()
-                console.log("Filter action triggered")
+                actionBar.currentFilter = GameFilters.getNextFilter(
+                    actionBar.currentFilter,
+                    actionBar.availableFilters
+                );
+                actionBar.filterClicked();
             }
         }
 
-        // Botón Lanzar
         ActionButton {
             id: launchButton
             visible: showLaunch
@@ -82,7 +90,6 @@ Item {
             }
         }
 
-        // Botón Atrás
         ActionButton {
             id: backButton
             visible: showBack

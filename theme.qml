@@ -8,6 +8,7 @@ import "qrc:/qmlutils" as PegasusUtils
 import "ColorMapping.js" as ColorMapping
 import "gameSystems.js" as GameSystems
 import "./Components" as Components
+import "GameFilters.js" as GameFilters
 
 FocusScope {
     id: root
@@ -44,6 +45,19 @@ FocusScope {
 
     function getGameFromScreenshot(screenshot) {
         return Utils.getGameFromScreenshot(api.collections, screenshot);
+    }
+
+    function updateFilterButtonState() {
+        var currentCollection = api.collections.get(collectionsListView.currentIndex);
+        gameActionBar.filterButtonEnabled =
+        GameFilters.hasGamesWithFilter(currentCollection, "Favorites") ||
+        GameFilters.hasGamesWithFilter(currentCollection, "Last Played");
+    }
+
+    property var filterFunctions: GameFilters.getFilterFunctions()
+
+    function getCurrentFilterFunction() {
+        return filterFunctions[gameActionBar.currentFilter] || filterFunctions["All Games"];
     }
 
     Component.onCompleted: {
@@ -356,14 +370,18 @@ FocusScope {
             }
 
             onCurrentIndexChanged: {
-                indexToPosition = currentIndex
-                currentShortName = model.get(currentIndex).shortName
-                gameGrid.model = api.collections.get(currentIndex).games;
-                updateCurrentColor()
-                loadCollectionMetadata()
+                indexToPosition = currentIndex;
+                currentShortName = model.get(currentIndex).shortName;
+                updateCurrentColor();
+                loadCollectionMetadata();
+
+                // Actualizar filtros disponibles para esta colección
+                var currentCollection = api.collections.get(currentIndex);
+                gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollection);
+                gameActionBar.currentFilter = "All Games"; // Resetear siempre a "All Games"
 
                 if (collectionInfo.autoscroll) {
-                    collectionInfo.autoscroll.restart()
+                    collectionInfo.autoscroll.restart();
                 }
             }
 
@@ -469,13 +487,49 @@ FocusScope {
                 width: parent.width * 0.90
                 height: parent.height * 0.98
 
-                property int columns: 6
-                property int rows: 3
+                property int columns: 4
+                property int rows: 2
 
                 cellWidth: width / columns
                 cellHeight: height / rows
 
                 cacheBuffer: 200
+
+                model: SortFilterProxyModel {
+                    id: proxyModel
+                    sourceModel: api.collections.get(collectionsListView.currentIndex).games
+
+                    filters: ExpressionFilter {
+                        expression: {
+                            var filterFunc = root.getCurrentFilterFunction();
+                            return filterFunc(model);
+                        }
+                    }
+
+                    sorters: [
+                        RoleSorter {
+                            roleName: "lastPlayed"
+                            sortOrder: Qt.DescendingOrder
+                            enabled: gameActionBar.currentFilter === "Last Played"
+                        },
+                        RoleSorter {
+                            roleName: "title"
+                            sortOrder: Qt.AscendingOrder
+                            enabled: gameActionBar.currentFilter !== "Last Played"
+                        }
+                    ]
+
+                    onCountChanged: {
+                        if (count > 0) {
+                            if (gameGrid.currentIndex >= count) {
+                                gameGrid.currentIndex = count - 1;
+                            }
+                            currentgame = gameGrid.model.get(gameGrid.currentIndex);
+                        } else {
+                            currentgame = null;
+                        }
+                    }
+                }
 
                 Component.onCompleted: {
                     if (count > 0) {
@@ -519,11 +573,33 @@ FocusScope {
 
                     Component.onCompleted: {
                         updateGame();
+
                     }
 
                     function updateGame() {
                         game = gameGrid.model.get(index);
                     }
+
+                    /*function updateVideoState() {
+                        if (loader.item && loader.item.videoLoader.item) {
+                            var player = loader.item.videoLoader.item.mediaPlayer;
+                            var output = loader.item.videoLoader.item.videoOutput;
+
+                            if (selected && gameGrid.activeFocus) {
+                                if (!player.source) {
+                                    player.source = game.assets.video;
+                                }
+                                player.play();
+                                player.muted = false;
+                                output.visible = true;
+                            } else {
+                                player.stop();
+                                player.source = "";
+                                player.muted = true;
+                                output.visible = false;
+                            }
+                        }
+                    }*/
 
                     function updateVideoState() {
                         if (loader.item && loader.item.videoLoader.item) {
@@ -535,7 +611,7 @@ FocusScope {
                                     player.source = game.assets.video;
                                 }
                                 player.play();
-                                player.muted = false;
+                                player.muted = api.memory.get('videoMuted') || false;
                                 output.visible = true;
                             } else {
                                 player.stop();
@@ -652,7 +728,7 @@ FocusScope {
                                                 visible: false
                                             }
 
-                                            MediaPlayer {
+                                            /*MediaPlayer {
                                                 id: mediaPlayer
                                                 source: game ? game.assets.video : ""
                                                 videoOutput: videoOutput
@@ -673,7 +749,34 @@ FocusScope {
                                                         //console.log("Video error:", errorString);
                                                     }
                                                 }
+                                            }*/
+
+                                            MediaPlayer {
+                                                id: mediaPlayer
+                                                source: game ? game.assets.video : ""
+                                                videoOutput: videoOutput
+                                                loops: 1
+                                                autoPlay: true
+                                                muted: api.memory.get('videoMuted') || false
+
+                                                onStatusChanged: {
+                                                    if (status === MediaPlayer.Loaded) {
+                                                        play();
+                                                        // Asegurarnos que el estado de mute se aplica
+                                                        muted = api.memory.get('videoMuted') || false;
+                                                    }
+                                                    if (status === MediaPlayer.EndOfMedia) {
+                                                        videoOutput.visible = false;
+                                                        fastBlur.radius = 10;
+                                                        fastBlur.opacity = 1;
+                                                        logoOverlay.opacity = 1;
+                                                    }
+                                                    if (status === MediaPlayer.Error) {
+                                                        //console.log("Video error:", errorString);
+                                                    }
+                                                }
                                             }
+
 
                                             VideoOutput {
                                                 id: videoOutput
@@ -792,7 +895,16 @@ FocusScope {
                                             parent.color = Qt.rgba(0.8, 0.8, 0.8, 0.7);
                                             soundEffects.playPlay();
 
-                                            timer.start();
+                                            // Obtener el juego del modelo fuente
+                                            var sourceIndex = proxyModel.mapToSource(gameGrid.currentIndex);
+                                            var sourceModel = api.collections.get(collectionsListView.currentIndex).games;
+                                            if (sourceModel && sourceIndex >= 0 && sourceIndex < sourceModel.count) {
+                                                var gameToLaunch = sourceModel.get(sourceIndex);
+                                                if (gameToLaunch) {
+                                                    timer.gameToLaunch = gameToLaunch;
+                                                    timer.start();
+                                                }
+                                            }
                                         }
 
                                         onPressed: {
@@ -817,10 +929,12 @@ FocusScope {
                                     Timer {
                                         id: timer
                                         interval: 150
+                                        property var gameToLaunch: null
                                         onTriggered: {
-                                            if (currentgame) {
-                                                api.memory.set('lastPlayedGame', currentgame);
-                                                currentgame.launch();
+                                            if (gameToLaunch) {
+                                                api.memory.set('lastPlayedGame', gameToLaunch);
+                                                gameToLaunch.launch();
+                                                gameToLaunch = null;
                                             }
                                             playGameButton.color = Qt.rgba(1, 1, 1, 0.5);
                                         }
@@ -837,6 +951,63 @@ FocusScope {
                                         opacity = visible ? 1 : 0
                                     }
                                 }
+
+                                Rectangle {
+                                    id: muteButton
+                                    anchors {
+                                        right: playGameButton.left
+                                        rightMargin: parent.width * 0.02
+                                        verticalCenter: playGameButton.verticalCenter
+                                    }
+                                    width: parent.width * 0.15
+                                    height: parent.height * 0.2
+                                    color: Qt.rgba(1, 1, 1, 0.5)
+                                    radius: 20
+                                    opacity: {
+                                        if (!delegateRoot.selected) return 0;
+                                        if (!videoLoader.item) return 0;
+                                        return videoLoader.item.videoOutput.visible ? 1 : 0;
+                                    }
+                                    z: 1000
+
+                                    property bool isMuted: api.memory.get('videoMuted') || false
+
+                                    Image {
+                                        anchors.centerIn: parent
+                                        source: muteButton.isMuted ? "assets/icons/mute.png" : "assets/icons/volume.png"
+                                        width: parent.width * 0.7
+                                        height: width
+                                        mipmap: true
+                                        fillMode: Image.PreserveAspectFit
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+
+                                        onClicked: {
+                                            soundEffects.playChange();
+                                            muteButton.isMuted = !muteButton.isMuted;
+                                            api.memory.set('videoMuted', muteButton.isMuted);
+
+                                            if (videoLoader.item) {
+                                                videoLoader.item.mediaPlayer.muted = muteButton.isMuted;
+                                            }
+                                        }
+
+                                        onPressed: parent.color = Qt.rgba(0.7, 0.7, 0.7, 0.7)
+                                        onReleased: parent.color = containsMouse ? Qt.rgba(0.9, 0.9, 0.9, 0.6) : Qt.rgba(1, 1, 1, 0.5)
+                                        onEntered: parent.color = Qt.rgba(0.9, 0.9, 0.9, 0.6)
+                                        onExited: parent.color = Qt.rgba(1, 1, 1, 0.5)
+                                    }
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 600
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -846,7 +1017,7 @@ FocusScope {
                     soundEffects.playChange();
                     var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
                     screenshotsContainer.setScreenshot(selectedGame.assets.screenshot);
-                    currentgame = gameGrid.model.get(currentIndex);
+                    currentgame = selectedGame;
                 }
 
                 focus: gamesGridFocused
@@ -891,10 +1062,32 @@ FocusScope {
                         }
                         else if (api.keys.isAccept(event)) {
                             event.accepted = true;
-                            if (currentgame) {
-                                api.memory.set('lastPlayedGame', currentgame);
-                                currentgame.launch();
+                            var sourceIndex = proxyModel.mapToSource(gameGrid.currentIndex);
+                            var sourceModel = api.collections.get(collectionsListView.currentIndex).games;
+                            if (sourceModel && sourceIndex >= 0 && sourceIndex < sourceModel.count) {
+                                var gameToLaunch = sourceModel.get(sourceIndex);
+                                if (gameToLaunch) {
+                                    api.memory.set('lastPlayedGame', gameToLaunch);
+                                    gameToLaunch.launch();
+                                }
                             }
+                        }
+                        else if (api.keys.isFilters(event)) {
+                            event.accepted = true;
+                            gameActionBar.currentFilter = GameFilters.getNextFilter(
+                                gameActionBar.currentFilter,
+                                gameActionBar.availableFilters
+                            );
+                            soundEffects.playChange();
+                            proxyModel.invalidate();
+
+                            if (gameGrid.count > 0) {
+                                currentgame = gameGrid.model.get(gameGrid.currentIndex);
+                            } else {
+                                currentgame = null;
+                            }
+
+                            gameActionBar.filterButton.buttonText = gameActionBar.currentFilter;
                         }
                     }
                     screensaver.resetInactivityTimer();
@@ -931,13 +1124,25 @@ FocusScope {
             }
 
             onFilterClicked: {
-                console.log("Filtrar juegos")
+                proxyModel.invalidate();
+                if (gameGrid.count > 0) {
+                    currentgame = gameGrid.model.get(gameGrid.currentIndex);
+                } else {
+                    currentgame = null;
+                }
             }
 
             onLaunchClicked: {
                 if (currentgame) {
-                    api.memory.set('lastPlayedGame', currentgame)
-                    currentgame.launch()
+                    var sourceModel = api.collections.get(collectionsListView.currentIndex).games;
+                    for (var i = 0; i < sourceModel.count; i++) {
+                        var sourceGame = sourceModel.get(i);
+                        if (sourceGame && sourceGame.title === currentgame.title) {
+                            api.memory.set('lastPlayedGame', sourceGame);
+                            sourceGame.launch();
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -1001,7 +1206,11 @@ FocusScope {
 
     function loadCollectionMetadata() {
         var systemData = GameSystems.getSystemMetadata(currentShortName) || {};
-        var gameCount = api.collections.get(collectionsListView.currentIndex).games.count || 0;
+        var currentCollection = api.collections.get(collectionsListView.currentIndex);
+        var gameCount = currentCollection.games.count || 0;
+
+        // Actualizar filtros disponibles (por si acaso)
+        gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollection);
 
         collectionSystemInfo = "┌CONSOLE: " + (systemData.systemName || "None") + "┐┌" +
         "YEAR: " + (systemData.releaseYear || "None") + "┐┌" +

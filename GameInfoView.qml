@@ -8,11 +8,15 @@ Item {
     width: parent.width * 0.50
     height: parent.height * 0.50
     visible: parent ? parent.gamesGridVisible : false
-    clip: true
 
-    property var currentgame
+    property var currentgame: null
 
-
+    onCurrentgameChanged: {
+        gameLogo.source = "";
+        if (currentgame && currentgame.assets.logo) {
+            gameLogo.source = currentgame.assets.logo;
+        }
+    }
 
     Column {
         anchors.fill: parent
@@ -140,6 +144,25 @@ Item {
                             mipmap: true
                         }
                     }
+                }
+            }
+
+            Rectangle {
+                width: lastPlayedText.contentWidth + 30
+                height: parent.height + 10
+                color: Qt.rgba(0, 0, 0, 0.5)
+                border.color: "white"
+                border.width: 2
+                radius: 5
+                visible: currentgame ? currentgame.lastPlayed && currentgame.lastPlayed.getTime() > 0 : false
+
+                Text {
+                    id: lastPlayedText
+                    text: currentgame ? Utils.formatLastPlayedDate(currentgame.lastPlayed) : ""
+                    color: "white"
+                    font.bold: true
+                    font.pixelSize: parent.height * 0.45
+                    anchors.centerIn: parent
                 }
             }
 
