@@ -18,26 +18,22 @@ Item {
     property var availableFilters: ["All Games"]
     property bool filterButtonEnabled: availableFilters.length > 1
 
-    // Señales
     signal favoriteClicked()
     signal filterClicked()
     signal launchClicked()
     signal backClicked()
 
-    // Sonido
     SoundEffect {
         id: buttonSound
         source: "assets/sound/change.wav"
         volume: 0.5
     }
 
-    // Contenedor principal
     Row {
         id: buttonLayout
         anchors.centerIn: parent
         spacing: width * 0.02
 
-        // Botón Favorito
         ActionButton {
             id: favoriteButton
             visible: showFavorite
@@ -48,14 +44,14 @@ Item {
             onClicked: {
                 buttonSound.play()
                 actionBar.favoriteClicked()
-                console.log("Favorite action triggered")
+                //console.log("Favorite action triggered")
             }
         }
 
         ActionButton {
             id: filterButton
             visible: showFilter
-            width: actionBar.width * 0.2
+            //width: actionBar.width * 0.2
             iconSource: "assets/icons/filter.png"
             buttonText: actionBar.currentFilter
             enabled: filterButtonEnabled
@@ -82,7 +78,7 @@ Item {
             onClicked: {
                 buttonSound.play()
                 actionBar.launchClicked()
-                console.log("Launch action triggered")
+                //console.log("Launch action triggered")
                 if (currentgame) {
                     api.memory.set('lastPlayedGame', currentgame)
                     currentgame.launch()

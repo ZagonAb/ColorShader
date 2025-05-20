@@ -1,9 +1,8 @@
-
 function getFilterFunctions() {
     return {
         "All Games": function(game) { return true; },
-        "Favorites": function(game) { return game && game.favorite; },
-        "Last Played": function(game) { return game && game.lastPlayed && game.lastPlayed.getTime() > 0; }
+        "Favorites Games": function(game) { return game && game.favorite; },
+        "Continue Playing": function(game) { return game && game.lastPlayed && game.lastPlayed.getTime() > 0; }
     };
 }
 
@@ -36,12 +35,12 @@ function getSortedGames(games, filterName) {
 
     // Luego ordenar según el filtro
     switch(filterName) {
-        case "Last Played":
+        case "Continue Playing":
             filteredGames.sort(function(a, b) {
                 return b.lastPlayed - a.lastPlayed; // Más reciente primero
             });
             break;
-        case "Favorites":
+        case "Favorites Games":
             // Los favoritos ya están al principio por cómo funciona filter
             break;
         default:
@@ -79,8 +78,8 @@ function getAvailableFilters(collection) {
         if (hasFavorites && hasLastPlayed) break;
     }
 
-    if (hasFavorites) filters.push("Favorites");
-    if (hasLastPlayed) filters.push("Last Played");
+    if (hasFavorites) filters.push("Favorites Games");
+    if (hasLastPlayed) filters.push("Continue Playing");
 
     return filters;
 }

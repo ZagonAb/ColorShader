@@ -126,7 +126,6 @@ function updateTextWidth() {
     collectionInfo.textWidth = approximateWidth;
 }
 
-// Añade al final de utils.js
 function formatLastPlayedDate(lastPlayed) {
     if (!lastPlayed || lastPlayed.getTime() === 0) {
         return "Never played";

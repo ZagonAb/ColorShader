@@ -510,12 +510,12 @@ FocusScope {
                         RoleSorter {
                             roleName: "lastPlayed"
                             sortOrder: Qt.DescendingOrder
-                            enabled: gameActionBar.currentFilter === "Last Played"
+                            enabled: gameActionBar.currentFilter === "Continue Playing"
                         },
                         RoleSorter {
                             roleName: "title"
                             sortOrder: Qt.AscendingOrder
-                            enabled: gameActionBar.currentFilter !== "Last Played"
+                            enabled: gameActionBar.currentFilter !== "Continue Playing"
                         }
                     ]
 
@@ -579,27 +579,6 @@ FocusScope {
                     function updateGame() {
                         game = gameGrid.model.get(index);
                     }
-
-                    /*function updateVideoState() {
-                        if (loader.item && loader.item.videoLoader.item) {
-                            var player = loader.item.videoLoader.item.mediaPlayer;
-                            var output = loader.item.videoLoader.item.videoOutput;
-
-                            if (selected && gameGrid.activeFocus) {
-                                if (!player.source) {
-                                    player.source = game.assets.video;
-                                }
-                                player.play();
-                                player.muted = false;
-                                output.visible = true;
-                            } else {
-                                player.stop();
-                                player.source = "";
-                                player.muted = true;
-                                output.visible = false;
-                            }
-                        }
-                    }*/
 
                     function updateVideoState() {
                         if (loader.item && loader.item.videoLoader.item) {
@@ -727,29 +706,6 @@ FocusScope {
                                                 radius: 10
                                                 visible: false
                                             }
-
-                                            /*MediaPlayer {
-                                                id: mediaPlayer
-                                                source: game ? game.assets.video : ""
-                                                videoOutput: videoOutput
-                                                loops: 1
-                                                autoPlay: true
-
-                                                onStatusChanged: {
-                                                    if (status === MediaPlayer.Loaded) {
-                                                        play();
-                                                    }
-                                                    if (status === MediaPlayer.EndOfMedia) {
-                                                        videoOutput.visible = false;
-                                                        fastBlur.radius = 10;
-                                                        fastBlur.opacity = 1;
-                                                        logoOverlay.opacity = 1;
-                                                    }
-                                                    if (status === MediaPlayer.Error) {
-                                                        //console.log("Video error:", errorString);
-                                                    }
-                                                }
-                                            }*/
 
                                             MediaPlayer {
                                                 id: mediaPlayer
@@ -895,7 +851,6 @@ FocusScope {
                                             parent.color = Qt.rgba(0.8, 0.8, 0.8, 0.7);
                                             soundEffects.playPlay();
 
-                                            // Obtener el juego del modelo fuente
                                             var sourceIndex = proxyModel.mapToSource(gameGrid.currentIndex);
                                             var sourceModel = api.collections.get(collectionsListView.currentIndex).games;
                                             if (sourceModel && sourceIndex >= 0 && sourceIndex < sourceModel.count) {
