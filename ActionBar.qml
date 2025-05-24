@@ -13,7 +13,6 @@ Item {
     property bool showFilter: true
     property bool showLaunch: true
     property bool showBack: true
-
     property string currentFilter: "All Games"
     property var availableFilters: ["All Games"]
     property bool filterButtonEnabled: availableFilters.length > 1
@@ -29,6 +28,11 @@ Item {
         volume: 0.5
     }
 
+    onCurrentFilterChanged: {
+        filterButton.buttonText = currentFilter;
+        console.log("Filtro cambiado a:", currentFilter);
+    }
+
     Row {
         id: buttonLayout
         anchors.centerIn: parent
@@ -39,19 +43,17 @@ Item {
             visible: showFavorite
             width: actionBar.width * 0.2
             iconSource: "assets/icons/favorite.png"
-            buttonText: "Favorite"
+            buttonText: currentgame ? (currentgame.favorite ? "Favorite -" : "Favorite +") : "Favorite"
 
             onClicked: {
-                buttonSound.play()
-                actionBar.favoriteClicked()
-                //console.log("Favorite action triggered")
+                buttonSound.play();
+                actionBar.favoriteClicked();
             }
         }
 
         ActionButton {
             id: filterButton
             visible: showFilter
-            //width: actionBar.width * 0.2
             iconSource: "assets/icons/filter.png"
             buttonText: actionBar.currentFilter
             enabled: filterButtonEnabled

@@ -4,11 +4,9 @@ Item {
     id: logoContainer
     width: parent.width * 0.4
     height: parent.height * 0.3
-
     property real themeContainerOpacity: 1.0
     property string currentShortName: ""
     property bool visibleState: false
-
     visible: visibleState
     opacity: 0.1 * themeContainerOpacity
 

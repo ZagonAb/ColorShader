@@ -1,8 +1,12 @@
 function getFilterFunctions() {
     return {
         "All Games": function(game) { return true; },
-        "Favorites Games": function(game) { return game && game.favorite; },
-        "Continue Playing": function(game) { return game && game.lastPlayed && game.lastPlayed.getTime() > 0; }
+        "Favorites Games": function(game) {
+            return game && game.favorite === true;
+        },
+        "Continue Playing": function(game) {
+            return game && game.lastPlayed && game.lastPlayed.getTime() > 0;
+        }
     };
 }
 
@@ -23,28 +27,21 @@ function hasGamesWithFilter(collection, filterName) {
 function getSortedGames(games, filterName) {
     var filterFunc = getFilterFunctions()[filterName];
     if (!filterFunc) filterFunc = getFilterFunctions()["All Games"];
-
-    // Convertir el modelo a array para poder ordenarlo
     var gamesArray = [];
     for (var i = 0; i < games.count; i++) {
         gamesArray.push(games.get(i));
     }
 
-    // Filtrar primero
     var filteredGames = gamesArray.filter(filterFunc);
-
-    // Luego ordenar según el filtro
     switch(filterName) {
         case "Continue Playing":
             filteredGames.sort(function(a, b) {
-                return b.lastPlayed - a.lastPlayed; // Más reciente primero
+                return b.lastPlayed - a.lastPlayed;
             });
             break;
         case "Favorites Games":
-            // Los favoritos ya están al principio por cómo funciona filter
             break;
         default:
-            // Orden por defecto (por título)
             filteredGames.sort(function(a, b) {
                 return a.title.localeCompare(b.title);
             });
@@ -65,8 +62,7 @@ function getAvailableFilters(collection) {
     var hasFavorites = false;
     var hasLastPlayed = false;
 
-    // Verificar si la colección tiene juegos favoritos o jugados recientemente
-    for (var i = 0; i < collection.games.count; i++) {
+    for (var i = 0; i < collection.games.count && (!hasFavorites || !hasLastPlayed); i++) {
         var game = collection.games.get(i);
         if (!hasFavorites && game.favorite) {
             hasFavorites = true;
@@ -74,13 +70,10 @@ function getAvailableFilters(collection) {
         if (!hasLastPlayed && game.lastPlayed && game.lastPlayed.getTime() > 0) {
             hasLastPlayed = true;
         }
-        // Si ya encontramos ambos, no necesitamos seguir buscando
-        if (hasFavorites && hasLastPlayed) break;
     }
 
     if (hasFavorites) filters.push("Favorites Games");
     if (hasLastPlayed) filters.push("Continue Playing");
-
     return filters;
 }
 

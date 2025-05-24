@@ -18,7 +18,6 @@ Rectangle {
     property bool showImage1: true
     property real containerOpacity: 1.0
 
-    // Señales para comunicarse con el componente padre
     signal screensaverStarted()
     signal screensaverStopped()
 
@@ -86,7 +85,6 @@ Rectangle {
     }
 
     function getGameFromScreenshot(screenshot) {
-        // Esta función debe ser proporcionada por el componente padre
         return null;
     }
 

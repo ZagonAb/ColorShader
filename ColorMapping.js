@@ -265,3 +265,4 @@ var colorMap = {
 function getColor(system) {
     return colorMap[system] || colorMap["default"] || "#000000";
 }
+

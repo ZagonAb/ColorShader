@@ -8,7 +8,6 @@ Item {
     width: parent.width * 0.50
     height: parent.height * 0.50
     visible: parent ? parent.gamesGridVisible : false
-
     property var currentgame: null
 
     onCurrentgameChanged: {

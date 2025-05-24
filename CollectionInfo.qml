@@ -12,7 +12,6 @@ Rectangle {
     color: "transparent"
     anchors.topMargin: 25
     visible: true
-
     property string currentShortName: ""
     property string collectionSystemInfo: ""
     property string collectionDescription: ""
@@ -22,6 +21,7 @@ Rectangle {
         id: gruppoFont
         source: "assets/font/LeagueGothic.ttf"
     }
+
     FontLoader {
         id: mitrFont
         source: "assets/font/BlackHanSans.ttf"
@@ -40,7 +40,6 @@ Rectangle {
             anchors.topMargin: 15
             text: collectionSystemInfo
             color: "white"
-            //font.pixelSize: Math.max(14, width * 0.024)
             font {
                 family: mitrFont.name
                 pixelSize: Math.max(14, width * 0.020)
@@ -53,7 +52,6 @@ Rectangle {
                 visible: false
                 font: systemInfoText.font
                 text: systemInfoText.text
-                //textFormat: Text.RichText
                 onTextChanged: Utils.updateTextWidth()
                 Component.onCompleted: Utils.updateTextWidth()
             }
@@ -108,12 +106,12 @@ Rectangle {
                         width: parent.width
                         text: collectionDescription
                         color: "white"
-                        //font.pixelSize: systemInfoText.font.pixelSize
 
                         font {
                             family: gruppoFont.name
                             pixelSize: systemInfoText.font.pixelSize
                         }
+
                         wrapMode: Text.WordWrap
                         horizontalAlignment: Text.AlignHCenter
                         opacity: 0

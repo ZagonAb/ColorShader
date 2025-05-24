@@ -5,7 +5,6 @@ Item {
     id: topBar
     width: parent.width
     height: root.height * 0.060
-
     property real themeContainerOpacity: 1.0
     property bool gamesGridVisible: false
     property string currentShortName: ""
