@@ -5,8 +5,8 @@ import SortFilterProxyModel 0.2
 import QtMultimedia 5.15
 import "utils.js" as Utils
 import "qrc:/qmlutils" as PegasusUtils
-import "ColorMapping.js" as ColorMapping
-import "gameSystems.js" as GameSystems
+//import "ColorMapping.js" as ColorMapping
+//import "gameSystems.js" as GameSystems
 import "./Components" as Components
 import "GameFilters.js" as GameFilters
 
@@ -38,7 +38,7 @@ FocusScope {
     }
 
     function updateCurrentColor() {
-        currentColor = ColorMapping.getColor(currentShortName);
+        currentColor = myColorMapping.getColor(currentShortName);
         gradientCanvas.requestPaint();
     }
 
@@ -81,6 +81,7 @@ FocusScope {
 
         updateCurrentColor();
         screensaver.randomScreenshots = Utils.getRandomScreenshots(api.collections);
+
     }
 
     Components.Screensaver {
@@ -99,6 +100,14 @@ FocusScope {
         function getGameFromScreenshot(screenshot) {
             return Utils.getGameFromScreenshot(api.collections, screenshot);
         }
+    }
+
+    Components.GameSystems {
+        id: myGameSystems
+    }
+
+    Components.ColorMapping {
+        id: myColorMapping
     }
 
     Keys.onPressed: {
@@ -1362,7 +1371,7 @@ FocusScope {
     }
 
     function loadCollectionMetadata() {
-        var systemData = GameSystems.getSystemMetadata(currentShortName) || {};
+        var systemData = myGameSystems.getSystemMetadata(currentShortName) || {};
         var currentCollection = api.collections.get(collectionsListView.currentIndex);
         var gameCount = currentCollection.games.count || 0;
         gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollection);
