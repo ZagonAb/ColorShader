@@ -80,11 +80,6 @@ Item {
             onClicked: {
                 buttonSound.play()
                 actionBar.launchClicked()
-                //console.log("Launch action triggered")
-                if (currentgame) {
-                    api.memory.set('lastPlayedGame', currentgame)
-                    currentgame.launch()
-                }
             }
         }
 

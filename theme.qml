@@ -430,7 +430,7 @@ FocusScope {
                         mainMenuFocused = false;
                         gamesGridVisible = true;
                         gamesGridFocused = true;
-                        soundEffects.playGo();
+                        soundEffects.playChange();
                         currentgame = gameGrid.model.get(gameGrid.currentIndex);
                         if (gameGrid.currentItem && gameGrid.currentItem.updateVideoState) {
                             gameGrid.currentItem.updateVideoState();
@@ -876,7 +876,7 @@ FocusScope {
 
                                         onClicked: {
                                             parent.color = Qt.rgba(0.8, 0.8, 0.8, 0.7);
-                                            soundEffects.playPlay();
+                                            soundEffects.playChange();
                                             var sourceIndex = proxyModel.mapToSource(gameGrid.currentIndex);
                                             var sourceModel = api.collections.get(collectionsListView.currentIndex).games;
                                             if (sourceModel && sourceIndex >= 0 && sourceIndex < sourceModel.count) {
