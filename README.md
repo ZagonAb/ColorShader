@@ -8,11 +8,12 @@
 
 
 ## Características Principales
-- **Modo salvapantallas**: Rotación de capturas de pantalla con logos del sistema tras inactividad
+- **Modo salvapantallas**: Rotación de capturas de pantalla con logos del sistema tras inactividad.
+- **Filtrar** juegos de la colección por Favoritos o Continuar jugando.
 
 ## Personalización
 
-- Colores: Editar `ColorMapping.js`
+- Colores: Editar `ColorMapping.qml`
 
 ## Controles
 
