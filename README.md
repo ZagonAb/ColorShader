@@ -9,17 +9,11 @@
 
 ## Características Principales
 - **Modo salvapantallas**: Rotación de capturas de pantalla con logos del sistema tras inactividad.
-- **Filtrar** juegos de la colección por Favoritos o Continuar jugando.
+- **Filtrardo:** Filtra los juegos de la colección por Favoritos o Continuar jugando.
 
 ## Personalización
 
 - Colores: Editar `ColorMapping.qml`
-
-## Controles
-
-- **Menú principal**: Izq/Der para navegar, Accept para seleccionar
-- **Cuadrícula**: Flechas para moverte, Cancel para volver
-- **Salvapantallas**: Cualquier input lo desactiva
 
 
 ## 🛠️ Instalación
