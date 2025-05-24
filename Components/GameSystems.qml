@@ -9,6 +9,13 @@ QtObject {
             description: "The Acorn Archimedes is a family of personal computers designed by Acorn Computers of Cambridge, England. The systems are based on Acorn's own ARM architecture processors and the proprietary operating systems Arthur and RISC OS."
         },
         {
+            shortName: "movies",
+            systemName: "Movies",
+            releaseYear: 1895,
+            description: "Cinema was born in 1895 with the Lumière brothers, marking the beginning of an art form that has evolved for over a century. This collection features films from
+            various genres, eras, and styles, each with its own story and perspective. A diverse journey through the magic of the seventh art."
+        },
+        {
             shortName: "androidapps",
             systemName: "Android Apps",
             releaseYear: "Various",

@@ -12,8 +12,10 @@ Item {
 
     onCurrentgameChanged: {
         gameLogo.source = "";
-        if (currentgame && currentgame.assets.logo) {
+        if (currentgame && currentgame.assets && currentgame.assets.logo) {
             gameLogo.source = currentgame.assets.logo;
+        } else {
+            gameLogo.source = "assets/logos/default.png";
         }
     }
 
@@ -22,6 +24,7 @@ Item {
         anchors.leftMargin: parent ? parent.width * 0.020 : 0
         anchors.topMargin: parent ? parent.height * 0.010 : 0
         spacing: 20
+
 
         Item {
             width: parent.width * 0.40
@@ -42,7 +45,47 @@ Item {
                 source: "assets/logos/default.png"
                 fillMode: Image.PreserveAspectFit
                 mipmap: true
-                visible: gameLogo.status === Image.Error
+                visible: gameLogo.status === Image.Error && status !== Image.Error
+            }
+
+            Text {
+                id: fallbackText
+                anchors {
+                    top: parent.top
+                    bottom: parent.bottom
+                    left: parent.left
+                    right: parent.right
+                    leftMargin: -parent.width * 0.1
+                    rightMargin: -parent.width * 0.1
+                }
+                text: currentgame ? currentgame.title : ""
+                color: "white"
+                font.family: "Black Han Sans"
+                font.pixelSize: Math.min(parent.height * 0.32, parent.width * 0.24)
+                font.bold: false
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                wrapMode: Text.Wrap
+                minimumPixelSize: 12
+                fontSizeMode: Text.Fit
+                visible: gameLogo.status === Image.Error && fallbackImage.status === Image.Error
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    color: "black"
+                    radius: 3
+                    samples: 5
+                    spread: 0.7
+                }
+
+                FontLoader {
+                    id: blackHanSansFont
+                    source: "assets/font/BlackHanSans.ttf"
+                    onStatusChanged: {
+                        if (status === FontLoader.Ready) {
+                            fallbackText.font.family = blackHanSansFont.name
+                        }
+                    }
+                }
             }
         }
 

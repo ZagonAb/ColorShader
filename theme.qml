@@ -3,12 +3,10 @@ import QtQuick.Layouts 1.15
 import QtGraphicalEffects 1.12
 import SortFilterProxyModel 0.2
 import QtMultimedia 5.15
-import "utils.js" as Utils
-import "qrc:/qmlutils" as PegasusUtils
-//import "ColorMapping.js" as ColorMapping
-//import "gameSystems.js" as GameSystems
 import "./Components" as Components
 import "GameFilters.js" as GameFilters
+import "utils.js" as Utils
+import "qrc:/qmlutils" as PegasusUtils
 
 FocusScope {
     id: root
@@ -788,7 +786,7 @@ FocusScope {
                                     anchors.centerIn: parent
                                     source: game ? game.assets.logo : ""
                                     width: parent.width * 0.7
-                                    height: width
+                                    height: parent.height * 0.7
                                     opacity: selected ? 0 : 1
                                     fillMode: Image.PreserveAspectFit
                                     asynchronous: true
