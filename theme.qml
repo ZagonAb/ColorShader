@@ -1004,7 +1004,7 @@ FocusScope {
 
                                     Image {
                                         anchors.centerIn: parent
-                                        source: favoriteButton.isFavorite ? "assets/icons/favorite-on-2.png" : "assets/icons/favorite-off-2.png"
+                                        source: favoriteButton.isFavorite ? "assets/icons/favorite-on.png" : "assets/icons/favorite-off.png"
                                         width: parent.width * 0.7
                                         height: width
                                         mipmap: true
