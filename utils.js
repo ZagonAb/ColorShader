@@ -148,6 +148,3 @@ function formatLastPlayedDate(lastPlayed) {
         return lastPlayed.toLocaleDateString();
     }
 }
-
-
-
