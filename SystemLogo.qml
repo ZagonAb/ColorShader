@@ -19,6 +19,9 @@ Item {
 
     visible: true
 
+    property string _activeShortName: ""
+    property bool _animationInProgress: false
+
     Item {
         id: imageContainer
         anchors.fill: parent
@@ -28,7 +31,7 @@ Item {
         Image {
             id: systemLogo
             anchors.fill: parent
-            source: currentShortName !== "" ? "assets/logos/" + currentShortName + ".png" : ""
+            source: _activeShortName !== "" ? "assets/logos/" + _activeShortName + ".png" : ""
             fillMode: Image.PreserveAspectFit
             asynchronous: true
             mipmap: true
@@ -38,7 +41,7 @@ Item {
             opacity: 0.1
 
             onStatusChanged: {
-                if (status === Image.Error && currentShortName !== "") {
+                if (status === Image.Error && _activeShortName !== "") {
                     source = "assets/logos/default.png"
                 }
             }
@@ -57,29 +60,37 @@ Item {
         }
     }
 
+    Behavior on themeContainerOpacity {
+        NumberAnimation { duration: 300 }
+    }
+
     onCurrentShortNameChanged: {
-        if (animate && currentShortName !== "") {
-            startAnimation();
+        if (currentShortName === _activeShortName) return;
+
+        imageShowAnim.stop();
+        resetAnimation.stop();
+
+        if (currentShortName !== "") {
+            resetAnimation.start();
         }
     }
 
-    Component.onCompleted: {
-        if (animate && currentShortName !== "") {
-            startAnimation();
+    SequentialAnimation {
+        id: resetAnimation
+        ScriptAction {
+            script: {
+                _animationInProgress = true;
+                _activeShortName = "";
+                imageContainer.opacity = 0;
+                imageContainer.scale = 0.5;
+            }
         }
-    }
-
-    function startAnimation() {
-        imageContainer.opacity = 0;
-        imageContainer.scale = 0.5;
-        showImageTimer.start();
-    }
-
-    Timer {
-        id: showImageTimer
-        interval: 50
-        onTriggered: {
-            imageShowAnim.start();
+        PauseAnimation { duration: 50 }
+        ScriptAction {
+            script: {
+                _activeShortName = currentShortName;
+                imageShowAnim.start();
+            }
         }
     }
 
@@ -91,6 +102,7 @@ Item {
             to: themeContainerOpacity
             duration: 600
             easing.type: Easing.OutCubic
+            onStopped: _animationInProgress = false
         }
         NumberAnimation {
             target: imageContainer
@@ -98,6 +110,24 @@ Item {
             to: 1
             duration: 700
             easing.type: Easing.OutBack
+        }
+    }
+
+    Connections {
+        target: systemLogo
+        function onStatusChanged() {
+            if (systemLogo.status === Image.Ready && !_animationInProgress) {
+                imageContainer.opacity = themeContainerOpacity;
+                imageContainer.scale = 1;
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        if (currentShortName !== "") {
+            _activeShortName = currentShortName;
+            imageContainer.opacity = themeContainerOpacity;
+            imageContainer.scale = 1;
         }
     }
 }
