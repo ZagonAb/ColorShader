@@ -289,6 +289,13 @@ FocusScope {
             }
         }
 
+        SystemLogo {
+            id: systemLogo
+            currentShortName: root.currentShortName
+            themeContainerOpacity: root.themeContainerOpacity
+            visible: mainMenuVisible
+        }
+
         ListView {
             id: collectionsListView
             width: parent.width * 0.90
