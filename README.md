@@ -3,8 +3,8 @@
 
 - **Un tema para Pegasus Frontend, diseñado para ofrecer una interfaz de juegos elegante y receptiva.**
 
-![screen](https://github.com/ZagonAb/ColorShader/blob/7897dc06f5fa80c45a03ad97383d7bdfe7df0691/.meta/screenshots/screen.png)
-![screen1](https://github.com/ZagonAb/ColorShader/blob/9ef9d6960e2e9dba72b672e2df6f1a41803a8dc7/.meta/screenshots/screen1.png)
+![screen](https://github.com/ZagonAb/ColorShader/blob/16eec603ee66072c9a4d7f10350f93532dfcabea/.meta/screenshots/screen.png)
+![screen1](https://github.com/ZagonAb/ColorShader/blob/16eec603ee66072c9a4d7f10350f93532dfcabea/.meta/screenshots/screen1.png)
 
 
 ## Características Principales
