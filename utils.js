@@ -145,6 +145,9 @@ function formatLastPlayedDate(lastPlayed) {
         var weeks = Math.floor(diffDays / 7);
         return weeks + (weeks === 1 ? " week ago" : " weeks ago");
     } else {
-        return lastPlayed.toLocaleDateString();
+        var day = lastPlayed.getDate();
+        var month = lastPlayed.getMonth() + 1;
+        var year = lastPlayed.getFullYear();
+        return day + "/" + month + "/" + year;
     }
 }
