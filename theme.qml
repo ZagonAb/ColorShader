@@ -47,8 +47,8 @@ FocusScope {
     function updateFilterButtonState() {
         var currentCollection = api.collections.get(collectionsListView.currentIndex);
         gameActionBar.filterButtonEnabled =
-        GameFilters.hasGamesWithFilter(currentCollection, "Favorites Games") ||
-        GameFilters.hasGamesWithFilter(currentCollection, "Continue Playing");
+        GameFilters.hasGamesWithFilter(currentCollection, "Favorites") ||
+        GameFilters.hasGamesWithFilter(currentCollection, "Last played");
     }
 
     function getCurrentFilterFunction() {
@@ -59,7 +59,7 @@ FocusScope {
         id: safetyTimer
         interval: 500
         onTriggered: {
-            if (gameGrid.count === 0 && currentFilter === "Favorites Games") {
+            if (gameGrid.count === 0 && currentFilter === "Favorites") {
                 //console.log("[Safety Timer] No hay favoritos - Cambiando a All Games");
                 currentFilter = "All Games";
                 Qt.callLater(proxyModel.invalidate);
@@ -70,7 +70,7 @@ FocusScope {
     Component.onCompleted: {
         Qt.onUncaughtError = function(error) {
             console.error("Error no capturado:", error);
-            if (currentFilter === "Favorites Games" && proxyModel.count === 0) {
+            if (currentFilter === "Favorites" && proxyModel.count === 0) {
                 console.log("Recuperando de error - cambiando a All Games");
                 currentFilter = "All Games";
                 proxyModel.invalidate();
@@ -540,12 +540,12 @@ FocusScope {
                         RoleSorter {
                             roleName: "lastPlayed"
                             sortOrder: Qt.DescendingOrder
-                            enabled: gameActionBar.currentFilter === "Continue Playing"
+                            enabled: gameActionBar.currentFilter === "Last played"
                         },
                         RoleSorter {
                             roleName: "title"
                             sortOrder: Qt.AscendingOrder
-                            enabled: gameActionBar.currentFilter !== "Continue Playing"
+                            enabled: gameActionBar.currentFilter !== "Last played"
                         }
                     ]
 
@@ -558,13 +558,13 @@ FocusScope {
                         } else {
                             currentgame = null;
 
-                            if (gameActionBar.currentFilter === "Favorites Games") {
+                            if (gameActionBar.currentFilter === "Favorites") {
                                 console.log("Lista de favoritos vacía - cambiando a All Games");
                                 gameActionBar.currentFilter = "All Games";
                                 Qt.callLater(proxyModel.invalidate);
                             } else {
                                 currentgame = null;
-                                if (gameActionBar.currentFilter === "Favorites Games") {
+                                if (gameActionBar.currentFilter === "Favorites") {
                                     console.log("Lista vacía - Activando timer de seguridad");
                                     safetyTimer.restart();
                                 }
@@ -797,6 +797,7 @@ FocusScope {
                                     opacity: selected ? 0 : 1
                                     fillMode: Image.PreserveAspectFit
                                     asynchronous: true
+                                    mipmap: true
 
                                     Behavior on opacity {
                                         NumberAnimation {
@@ -1048,7 +1049,7 @@ FocusScope {
 
                                                         proxyModel.invalidate();
 
-                                                        if (gameActionBar.currentFilter === "Favorites Games" && proxyModel.count === 0) {
+                                                        if (gameActionBar.currentFilter === "Favorites" && proxyModel.count === 0) {
                                                             gameActionBar.currentFilter = "All Games";
                                                         }
 
@@ -1104,7 +1105,7 @@ FocusScope {
                         currentgame = null;
                     }
 
-                    if (gameActionBar.currentFilter === "Favorites Games") {
+                    if (gameActionBar.currentFilter === "Favorites") {
                         var currentCollection = api.collections.get(collectionsListView.currentIndex);
                         gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollection);
                     }
@@ -1198,7 +1199,7 @@ FocusScope {
                                             gameActionBar.favoriteButton.buttonText = currentgame.favorite ? "Favorite -" : "Favorite +";
                                         }
                                         proxyModel.invalidate();
-                                        if (gameActionBar.currentFilter === "Favorites Games" && proxyModel.count === 0) {
+                                        if (gameActionBar.currentFilter === "Favorites" && proxyModel.count === 0) {
                                             gameActionBar.currentFilter = "All Games";
                                         }
 
@@ -1232,10 +1233,11 @@ FocusScope {
                 right: parent.right
                 rightMargin: parent.width * 0.03
             }
-            width: parent.width * 0.4
+            width: parent.width * 0.45
             height: parent.height * 0.07
             visible: gamesGridVisible
             opacity: themeContainerOpacity
+            rootReference: root
 
             onFavoriteClicked: {
                 if (currentgame) {
@@ -1244,16 +1246,16 @@ FocusScope {
                         var originalGame = collection.games.get(i);
                         if (originalGame.title === currentgame.title) {
                             originalGame.favorite = !originalGame.favorite;
-                            console.log("Favorito actualizado:", originalGame.title, originalGame.favorite);
+                            //console.log("Favorito actualizado:", originalGame.title, originalGame.favorite);
                             gameActionBar.availableFilters = GameFilters.getAvailableFilters(collection);
-                            console.log("Filtros disponibles actualizados:", gameActionBar.availableFilters);
+                            //console.log("Filtros disponibles actualizados:", gameActionBar.availableFilters);
                             break;
                         }
                     }
 
                     currentgame.favorite = !currentgame.favorite;
 
-                    if (currentFilter === "Favorites Games") {
+                    if (currentFilter === "Favorites") {
                         var hasFavorites = false;
                         for (var j = 0; j < collection.games.count; j++) {
                             if (collection.games.get(j).favorite) {
@@ -1263,7 +1265,7 @@ FocusScope {
                         }
 
                         if (!hasFavorites) {
-                            console.log("No hay más favoritos, cambiando a All Games");
+                            //console.log("No hay más favoritos, cambiando a All Games");
                             currentFilter = "All Games";
                             Qt.callLater(function() {
                                 proxyModel.invalidate();

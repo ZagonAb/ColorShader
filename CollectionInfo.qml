@@ -42,7 +42,7 @@ Rectangle {
             color: "white"
             font {
                 family: mitrFont.name
-                pixelSize: Math.max(14, width * 0.020)
+                pixelSize: Math.max(14, width * 0.023)
             }
             horizontalAlignment: Text.AlignHCenter
             opacity: 0

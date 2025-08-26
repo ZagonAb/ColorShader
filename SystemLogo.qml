@@ -8,8 +8,8 @@ Item {
     property real themeContainerOpacity: 1.0
     property bool animate: true
 
-    width: parent ? parent.width * 0.3 : 200
-    height: parent ? parent.height * 0.1 : 80
+    width: parent ? parent.width * 0.35 : 200
+    height: parent ? parent.height * 0.15 : 80
 
     anchors {
         horizontalCenter: parent.horizontalCenter

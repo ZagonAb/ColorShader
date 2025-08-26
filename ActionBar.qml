@@ -5,10 +5,6 @@ import "GameFilters.js" as GameFilters
 
 Item {
     id: actionBar
-    width: parent.width * 0.8
-    height: parent.height * 0.08
-    z: 50
-
     property bool showFavorite: true
     property bool showFilter: true
     property bool showLaunch: true
@@ -16,6 +12,7 @@ Item {
     property string currentFilter: "All Games"
     property var availableFilters: ["All Games"]
     property bool filterButtonEnabled: availableFilters.length > 1
+    property Item rootReference: null
 
     signal favoriteClicked()
     signal filterClicked()
@@ -33,15 +30,18 @@ Item {
         console.log("Filtro cambiado a:", currentFilter);
     }
 
-    Row {
+    Flow {
         id: buttonLayout
+        anchors.fill: parent
+        spacing: rootReference ? rootReference.width * 0.008 : 10
+        layoutDirection: Qt.LeftToRight
         anchors.centerIn: parent
-        spacing: width * 0.02
+        width: parent.width * 0.95
 
         ActionButton {
             id: favoriteButton
             visible: showFavorite
-            width: actionBar.width * 0.2
+            rootReference: actionBar.rootReference
             iconSource: "assets/icons/favorite.png"
             buttonText: currentgame ? (currentgame.favorite ? "Favorite -" : "Favorite +") : "Favorite"
 
@@ -54,6 +54,7 @@ Item {
         ActionButton {
             id: filterButton
             visible: showFilter
+            rootReference: actionBar.rootReference
             iconSource: "assets/icons/filter.png"
             buttonText: actionBar.currentFilter
             enabled: filterButtonEnabled
@@ -73,7 +74,7 @@ Item {
         ActionButton {
             id: launchButton
             visible: showLaunch
-            width: actionBar.width * 0.2
+            rootReference: actionBar.rootReference
             iconSource: "assets/icons/launch.png"
             buttonText: "Play Game"
 
@@ -86,7 +87,7 @@ Item {
         ActionButton {
             id: backButton
             visible: showBack
-            width: actionBar.width * 0.2
+            rootReference: actionBar.rootReference
             iconSource: "assets/icons/back.png"
             buttonText: "Back"
 

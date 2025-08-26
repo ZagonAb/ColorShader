@@ -27,8 +27,8 @@ Item {
 
 
         Item {
-            width: parent.width * 0.40
-            height: parent.height * 0.30
+            width: parent.width * 0.42
+            height: parent.height * 0.32
 
             Image {
                 id: gameLogo

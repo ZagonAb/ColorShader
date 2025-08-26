@@ -4,7 +4,7 @@ import QtMultimedia 5.15
 Item {
     id: soundEffects
 
-    property real effectsVolume: 1.0
+    property real effectsVolume: 0.2
 
     SoundEffect {
         id: changeSound

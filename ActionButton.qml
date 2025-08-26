@@ -3,28 +3,23 @@ import QtGraphicalEffects 1.12
 
 Rectangle {
     id: actionButton
-
     property string iconSource: ""
     property string buttonText: ""
     property real iconSizeRatio: 0.6
-    property real textSizeRatio: 0.35
-    property int minHeight: 35
-    property int maxHeight: 70
-    property int minWidth: 100
-    property int maxWidth: 300
-    property int textPadding: 20
+    property real textSizeRatio: 0.45
+    property Item rootReference: null
 
     signal clicked()
 
-    width: Math.min(Math.max(minWidth, contentRow.width + padding * 2 + textPadding), maxWidth)
-    height: Math.min(Math.max(minHeight, parent ? parent.height * 0.8 : minHeight), maxHeight)
-    implicitWidth: contentRow.width + padding * 2 + textPadding
-    property int padding: height * 0.3
+    width: rootReference ? rootReference.width * 0.1 : 120
+    height: rootReference ? rootReference.height * 0.06 : 60
+
+    property real padding: height * 0.2
 
     color: Qt.rgba(1, 1, 1, 0.5)
     radius: height / 2
     border.color: Qt.rgba(1, 1, 1, 0.7)
-    border.width: 1
+    border.width: Math.max(1, height * 0.02)
 
     scale: mouseArea.pressed ? 0.95 : 1.0
     Behavior on scale { NumberAnimation { duration: 100 } }
@@ -34,18 +29,25 @@ Rectangle {
     Row {
         id: contentRow
         anchors.centerIn: parent
-        spacing: height * 0.2
+        spacing: actionButton.height * 0.15
+        width: Math.min(implicitWidth, actionButton.width - actionButton.padding * 2)
+        height: actionButton.height * 0.7
+        clip: true
 
         Image {
             id: icon
             source: iconSource
             width: height
-            height: parent.parent.height * iconSizeRatio
+            height: parent.height * iconSizeRatio
+            anchors.verticalCenter: parent.verticalCenter
             fillMode: Image.PreserveAspectFit
             mipmap: true
             antialiasing: true
-            verticalAlignment: Image.AlignVCenter
             opacity: mouseArea.containsMouse ? 1.0 : 0.8
+
+            Component.onCompleted: {
+                if (height < 12) height = 12
+            }
 
             onStatusChanged: {
                 if (status === Image.Error) {
@@ -57,23 +59,24 @@ Rectangle {
         }
 
         Text {
-            id: text
+            id: textElement
             text: buttonText
             color: "white"
             font {
-                pixelSize: parent.parent.height * textSizeRatio
+                pixelSize: Math.max(8, contentRow.height * textSizeRatio)
                 bold: true
             }
-            verticalAlignment: Text.AlignVCenter
-            height: icon.height
+            anchors.verticalCenter: parent.verticalCenter
             opacity: icon.opacity
             elide: Text.ElideRight
+            width: Math.min(implicitWidth,
+                            actionButton.width - icon.width - contentRow.spacing - actionButton.padding * 2)
 
             Behavior on text {
                 SequentialAnimation {
-                    NumberAnimation { target: text; property: "opacity"; to: 0; duration: 100 }
+                    NumberAnimation { target: textElement; property: "opacity"; to: 0; duration: 100 }
                     PropertyAction {}
-                    NumberAnimation { target: text; property: "opacity"; to: 1; duration: 100 }
+                    NumberAnimation { target: textElement; property: "opacity"; to: 1; duration: 100 }
                 }
             }
         }

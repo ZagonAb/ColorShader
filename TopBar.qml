@@ -26,12 +26,12 @@ Item {
         anchors.margins: 10
         spacing: 10
 
-        Item { width: root.width * 0.015; height: 60 }
+        Item { width: root.width * 0.035; height: 60 }
 
         Text {
             id: clock
             color: "white"
-            font.pixelSize: root.width * 0.02
+            font.pixelSize: root.width * 0.025
             font.bold: true
             visible: true
             horizontalAlignment: Text.AlignLeft
@@ -62,8 +62,8 @@ Item {
         Image {
             id: batteryIcon
             source: getBatteryIcon()
-            width: root.width * 0.20
-            height: root.height * 0.03
+            width: root.width * 0.25
+            height: root.height * 0.035
             fillMode: Image.PreserveAspectFit
             mipmap: true
             asynchronous: true
