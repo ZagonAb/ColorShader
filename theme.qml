@@ -664,6 +664,7 @@ FocusScope {
 
                             Item {
                                 anchors.fill: parent
+                                clip: true
 
                                 Rectangle {
                                     id: mask
@@ -676,8 +677,8 @@ FocusScope {
                                     id: boxfront
                                     source: game ? game.assets.screenshot : ""
                                     fillMode: Image.PreserveAspectCrop
-                                    width: parent.width
-                                    height: parent.height
+                                    width: parent.width - 1
+                                    height: parent.height - 2
                                     visible: true
                                     asynchronous: true
                                     sourceSize { width: 256; height: 256 }
@@ -695,7 +696,7 @@ FocusScope {
                                     anchors.fill: boxfront
                                     source: boxfront
                                     maskSource: mask
-                                    visible: true
+                                    visible: tru
                                 }
 
                                 FastBlur {
@@ -773,6 +774,7 @@ FocusScope {
                                             VideoOutput {
                                                 id: videoOutput
                                                 anchors.fill: parent
+                                                anchors.margins: 1
                                                 fillMode: VideoOutput.PreserveAspectCrop
                                                 visible: delegateRoot.selected && gameGrid.activeFocus
                                                 layer.enabled: true
@@ -1072,6 +1074,40 @@ FocusScope {
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        id: selectionBorder
+                        anchors.fill: parent
+                        color: "transparent"
+                        border.width: selected ? 6 : 0
+                        border.color: myColorMapping.getColor(root.currentShortName)
+                        radius: 9
+                        z: 1001
+                        visible: selected
+
+                        SequentialAnimation {
+                            running: selected
+                            loops: Animation.Infinite
+
+                            PropertyAnimation {
+                                target: selectionBorder
+                                property: "border.color"
+                                from: myColorMapping.getColor(root.currentShortName)
+                                to: "#cecece"
+                                duration: 600
+                                easing.type: Easing.InOutQuad
+                            }
+
+                            PropertyAnimation {
+                                target: selectionBorder
+                                property: "border.color"
+                                from: "#cecece"
+                                to: myColorMapping.getColor(root.currentShortName)
+                                duration: 600
+                                easing.type: Easing.InOutQuad
                             }
                         }
                     }
