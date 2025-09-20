@@ -220,6 +220,7 @@ QtObject {
         "tanodragon": "#634c24",
         "tg-cd": "#6c2723",
         "tg16": "#cba490",
+        "turbografx16" : "#cba490",
         "tg16cd": "#6c2723",
         "thextech": "#a5703c",
         "thomson": "#544839",
