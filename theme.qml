@@ -269,9 +269,15 @@ FocusScope {
             }
 
             function setScreenshot(source) {
-                if (source !== currentScreenshot) {
-                    currentScreenshot = source;
-                    pendingSource = source;
+                var imageSource = "";
+                var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
+                if (selectedGame) {
+                    imageSource = selectedGame.assets.background || selectedGame.assets.screenshot || "";
+                }
+
+                if (imageSource !== currentScreenshot) {
+                    currentScreenshot = imageSource;
+                    pendingSource = imageSource;
                     useFirstImage = !useFirstImage;
                     transitionTimer.start();
                 }
@@ -280,10 +286,13 @@ FocusScope {
             Component.onCompleted: {
                 if (gameGrid.model && gameGrid.model.count > 0 && gameGrid.currentIndex >= 0) {
                     var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
-                    if (selectedGame && selectedGame.assets && selectedGame.assets.screenshot) {
-                        screenshotImage1.source = selectedGame.assets.screenshot;
-                        container1.opacity = 0.2;
-                        currentScreenshot = selectedGame.assets.screenshot;
+                    if (selectedGame && selectedGame.assets) {
+                        var imageSource = selectedGame.assets.background || selectedGame.assets.screenshot || "";
+                        if (imageSource) {
+                            screenshotImage1.source = imageSource;
+                            container1.opacity = 0.2;
+                            currentScreenshot = imageSource;
+                        }
                     }
                 }
             }
@@ -1118,7 +1127,9 @@ FocusScope {
                     var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
 
                     if (selectedGame) {
-                        screenshotsContainer.setScreenshot(selectedGame.assets.screenshot);
+                        var imageSource = selectedGame.assets.background || selectedGame.assets.screenshot || "";
+                        screenshotsContainer.setScreenshot(imageSource);
+
                         var collection = api.collections.get(collectionsListView.currentIndex);
                         for (var i = 0; i < collection.games.count; i++) {
                             var originalGame = collection.games.get(i);
