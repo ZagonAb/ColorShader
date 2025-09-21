@@ -1259,6 +1259,63 @@ FocusScope {
                     screensaver.resetInactivityTimer();
                 }
             }
+
+            Rectangle {
+                id: progressBarContainer
+
+                anchors {
+                    right: parent.right
+                    rightMargin: parent.width * 0.02
+                    verticalCenter: gameGrid.verticalCenter
+                }
+
+                width: 6
+                height: gameGrid.height * 0.8
+                color: Qt.rgba(1, 1, 1, 0.2)
+                radius: 3
+                visible: gameGrid.count > 8
+
+                Rectangle {
+                    id: progressIndicator
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+
+                    height: {
+                        if (gameGrid.count <= 8) return parent.height;
+
+                        var progress = (gameGrid.currentIndex + 1) / gameGrid.count;
+                        var minHeight = parent.height * 0.1;
+                        var calculatedHeight = parent.height * progress;
+
+                        return Math.max(minHeight, calculatedHeight);
+                    }
+
+                    color: myColorMapping.getColor(root.currentShortName)
+                    radius: 3
+
+                    Behavior on height {
+                        NumberAnimation {
+                            duration: 300
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on color {
+                        ColorAnimation { duration: 300 }
+                    }
+                }
+
+                Rectangle {
+                    anchors.fill: progressIndicator
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: Qt.rgba(1, 1, 1, 0.3) }
+                        GradientStop { position: 0.5; color: "transparent" }
+                        GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.2) }
+                    }
+                    radius: 3
+                }
+            }
         }
 
         CollectionInfo {
