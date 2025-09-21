@@ -2,7 +2,7 @@
 
 - **A theme for Pegasus Frontend, designed to provide an elegant and responsive gaming interface.**
 
-![screen](https://github.com/ZagonAb/ColorShader/blob/21b0334e98f9add6b5e914905aa3f43d1e5a4d27/.meta/screenshots/screen.png)
+![screen](https://github.com/ZagonAb/ColorShader/blob/f8d2112151acfaf6f17335591fd09f8e9c038f9d/.meta/screenshots/screen.png)
 ![screen1](https://github.com/ZagonAb/ColorShader/blob/b810b9dfdbc7bcad4a72cfa242ef5d444a9d6a15/.meta/screenshots/screen1.png)
 
 ### Key Features  
