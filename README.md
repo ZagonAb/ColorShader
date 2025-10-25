@@ -2,8 +2,8 @@
 
 - **A theme for Pegasus Frontend, designed to provide an elegant and responsive gaming interface.**
 
-![screen](https://github.com/ZagonAb/ColorShader/blob/f8d2112151acfaf6f17335591fd09f8e9c038f9d/.meta/screenshots/screen.png)
-![screen1](https://github.com/ZagonAb/ColorShader/blob/b810b9dfdbc7bcad4a72cfa242ef5d444a9d6a15/.meta/screenshots/screen1.png)
+![screen](https://github.com/ZagonAb/ColorShader/blob/21b0334e98f9add6b5e914905aa3f43d1e5a4d27/.meta/screenshots/screen.png)
+![screen1](https://github.com/ZagonAb/ColorShader/blob/21b0334e98f9add6b5e914905aa3f43d1e5a4d27/.meta/screenshots/screen1.png)
 
 ### Key Features  
 - **Screensaver mode:** Rotates screenshots with system logos after inactivity.
@@ -19,3 +19,9 @@
 <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br /><a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"></a>
 
 ---  
+
+### 💖 DONATE
+I'm a programming enthusiast and passionate about free software, with a special love for classic games and the retro community. All my themes and projects are open-source and available for anyone to use. If you'd like to show your support or help me continue creating and improving these projects, you can make a voluntary donation. Every contribution, no matter how small, allows me to continue improving and maintaining these projects. 👾
+
+[![Support on PayPal](https://img.shields.io/badge/PayPal-0070ba?style=for-the-badge)](https://paypal.me/ZagonAb)
+[![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Gonzalo/donate)
