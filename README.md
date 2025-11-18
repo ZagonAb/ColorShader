@@ -2,8 +2,8 @@
 
 - **A theme for Pegasus Frontend, designed to provide an elegant and responsive gaming interface.**
 
-![screen](https://github.com/ZagonAb/ColorShader/blob/21b0334e98f9add6b5e914905aa3f43d1e5a4d27/.meta/screenshots/screen.png)
-![screen1](https://github.com/ZagonAb/ColorShader/blob/21b0334e98f9add6b5e914905aa3f43d1e5a4d27/.meta/screenshots/screen1.png)
+![screen](https://github.com/ZagonAb/ColorShader/blob/cc9fbe52c1bcf3b5d4888f89f57c44b64ecd7866/.meta/screenshots/screen.png)
+![screen1](https://github.com/ZagonAb/ColorShader/blob/cc9fbe52c1bcf3b5d4888f89f57c44b64ecd7866/.meta/screenshots/screen1.png)
 
 ### Key Features  
 - **Screensaver mode:** Rotates screenshots with system logos after inactivity.
