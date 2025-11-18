@@ -27,9 +27,14 @@ function formatGameDeveloper(developer) {
 
 function getPlayersContent(players) {
     if (players > 1) {
+        const displayCount = Math.min(players, 4);
+        const showEllipsis = players > 4;
+
         return {
-            count: players,
-            source: "assets/icons/players.png"
+            count: displayCount,
+            source: "assets/icons/players.png",
+            showEllipsis: showEllipsis,
+            totalPlayers: players
         };
     }
     return null;
@@ -150,4 +155,23 @@ function formatLastPlayedDate(lastPlayed) {
         var year = lastPlayed.getFullYear();
         return day + "/" + month + "/" + year;
     }
+}
+
+function formatPlayTime(playTimeSeconds) {
+    if (!playTimeSeconds || playTimeSeconds < 60) {
+        return null;
+    }
+
+    var hours = Math.floor(playTimeSeconds / 3600);
+    var minutes = Math.floor((playTimeSeconds % 3600) / 60);
+
+    if (hours > 0) {
+        return ("00" + hours).slice(-2) + ":" + ("00" + minutes).slice(-2) + "h";
+    } else {
+        return ("00" + minutes).slice(-2) + "m";
+    }
+}
+
+function shouldShowPlayTime(playTimeSeconds) {
+    return playTimeSeconds && playTimeSeconds >= 60;
 }

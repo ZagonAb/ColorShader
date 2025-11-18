@@ -184,6 +184,7 @@ Item {
                             width: parent.height * 0.8
                             height: width
                             mipmap: true
+                            anchors.verticalCenter: parent.verticalCenter
                         }
                     }
                 }
@@ -209,7 +210,7 @@ Item {
             }
 
             Rectangle {
-                width: players_content.width + 30
+                width: players_content.width + (showEllipsisItem.visible ? showEllipsisItem.width : 0) + 30
                 height: parent.height + 10
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
@@ -244,6 +245,25 @@ Item {
                                 mipmap: true
                                 anchors.verticalCenter: parent.verticalCenter
                             }
+                        }
+                    }
+
+                    Item {
+                        id: showEllipsisItem
+                        width: ellipsisText.implicitWidth
+                        height: parent.height
+                        visible: {
+                            var playersContent = currentgame ? Utils.getPlayersContent(currentgame.players) : null;
+                            return playersContent ? playersContent.showEllipsis : false;
+                        }
+
+                        Text {
+                            id: ellipsisText
+                            text: "..."
+                            color: "white"
+                            font.bold: true
+                            font.pixelSize: parent.height * 0.6
+                            anchors.centerIn: parent
                         }
                     }
                 }

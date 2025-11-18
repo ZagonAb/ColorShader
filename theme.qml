@@ -534,6 +534,15 @@ FocusScope {
 
                 cacheBuffer: 200
 
+                Connections {
+                    target: game
+                    function onPlayTimeChanged() {
+                        if (playTimeIndicator) {
+                            playTimeIndicator.playTimeSeconds = game.playTime;
+                        }
+                    }
+                }
+
                 model: SortFilterProxyModel {
                     id: proxyModel
                     sourceModel: api.collections.get(collectionsListView.currentIndex).games
@@ -625,6 +634,9 @@ FocusScope {
 
                     function updateGame() {
                         game = gameGrid.model.get(index);
+                        if (playTimeIndicator) {
+                            playTimeIndicator.playTimeSeconds = game ? game.playTime : 0;
+                        }
                     }
 
                     function updateVideoState() {
@@ -865,7 +877,7 @@ FocusScope {
                                     anchors.bottomMargin: parent.height * 0.05
                                     width: parent.width * 0.5
                                     height: parent.height * 0.2
-                                    color: Qt.rgba(1, 1, 1, 0.5)
+                                    color: Qt.rgba(0, 0, 0, 0.6)
                                     radius: 20
                                     opacity: delegateRoot.selected ? 1 : 0
                                     z: 1000
@@ -964,7 +976,7 @@ FocusScope {
 
                                     width: parent.width * 0.15
                                     height: parent.height * 0.2
-                                    color: Qt.rgba(1, 1, 1, 0.5)
+                                    color: Qt.rgba(0, 0, 0, 0.6)
                                     radius: 20
                                     z: 1000
 
@@ -1023,7 +1035,7 @@ FocusScope {
 
                                     width: parent.width * 0.15
                                     height: parent.height * 0.2
-                                    color: Qt.rgba(1, 1, 1, 0.5)
+                                    color: Qt.rgba(0, 0, 0, 0.6)
                                     radius: 20
                                     opacity: delegateRoot.selected ? 1 : 0
                                     z: 1000
@@ -1081,6 +1093,69 @@ FocusScope {
                                             duration: 600
                                             easing.type: Easing.InOutQuad
                                         }
+                                    }
+                                }
+
+                                Rectangle {
+                                    id: playTimeIndicator
+                                    property int playTimeSeconds: game ? game.playTime : 0
+                                    property string formattedTime: Utils.formatPlayTime(playTimeSeconds)
+                                    property bool shouldShow: Utils.shouldShowPlayTime(playTimeSeconds) && delegateRoot.selected
+
+                                    anchors {
+                                        top: parent.top
+                                        right: parent.right
+                                        topMargin: parent.height * 0.05
+                                        rightMargin: parent.width * 0.03
+                                    }
+
+                                    width: parent.width * 0.35
+                                    height: parent.height * 0.15
+                                    color: Qt.rgba(0, 0, 0, 0.6)
+                                    radius: height * 0.2
+                                    opacity: shouldShow ? 1 : 0
+                                    visible: shouldShow
+                                    z: 1000
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 300
+                                            easing.type: Easing.InOutQuad
+                                        }
+                                    }
+
+                                    Row {
+                                        anchors.centerIn: parent
+                                        spacing: parent.width * 0.03
+
+                                        Image {
+                                            id: playTimeIcon
+                                            source: "assets/icons/playtime.svg"
+                                            width: parent.parent.height * 0.7
+                                            height: width
+                                            sourceSize { width: 64; height: 64 }
+                                            fillMode: Image.PreserveAspectFit
+                                            mipmap: true
+                                            asynchronous: true
+                                        }
+
+                                        Text {
+                                            id: playTimeText
+                                            text: playTimeIndicator.formattedTime
+                                            color: "white"
+                                            font.pixelSize: parent.parent.height * 0.5
+                                            font.bold: true
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        color: "transparent"
+                                        border.width: 1
+                                        border.color: Qt.rgba(1, 1, 1, 0.3)
+                                        radius: parent.radius
                                     }
                                 }
                             }

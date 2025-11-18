@@ -16,9 +16,9 @@ Rectangle {
 
     property real padding: height * 0.2
 
-    color: Qt.rgba(1, 1, 1, 0.5)
+    color: Qt.rgba(0, 0, 0, 0.6)
     radius: height / 2
-    border.color: Qt.rgba(1, 1, 1, 0.7)
+    border.color: Qt.rgba(0, 0, 0, 0.7)
     border.width: Math.max(1, height * 0.02)
 
     scale: mouseArea.pressed ? 0.95 : 1.0
@@ -88,10 +88,10 @@ Rectangle {
         hoverEnabled: true
         z: 100
 
-        onEntered: actionButton.color = Qt.rgba(0.9, 0.9, 0.9, 0.6)
-        onExited: actionButton.color = Qt.rgba(1, 1, 1, 0.5)
-        onPressed: actionButton.color = Qt.rgba(0.7, 0.7, 0.7, 0.7)
-        onReleased: if (!containsMouse) actionButton.color = Qt.rgba(1, 1, 1, 0.5)
+        onEntered: actionButton.color = Qt.rgba(0, 0, 0, 0.8)
+        onExited: actionButton.color = Qt.rgba(0, 0, 0, 0.6)
+        onPressed: actionButton.color = Qt.rgba(0, 0, 0, 0.9)
+        onReleased: if (!containsMouse) actionButton.color = Qt.rgba(0, 0, 0, 0.7)
         onClicked: {
             actionButton.clicked()
         }
