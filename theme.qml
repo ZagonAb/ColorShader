@@ -906,7 +906,7 @@ FocusScope {
                                         hoverEnabled: true
 
                                         onClicked: {
-                                            parent.color = Qt.rgba(0.8, 0.8, 0.8, 0.7);
+                                            parent.color = Qt.rgba(0, 0, 0, 0.7);
                                             soundEffects.playChange();
                                             var sourceIndex = proxyModel.mapToSource(gameGrid.currentIndex);
                                             var sourceModel = api.collections.get(collectionsListView.currentIndex).games;
@@ -920,23 +920,24 @@ FocusScope {
                                         }
 
                                         onPressed: {
-                                            parent.color = Qt.rgba(0.7, 0.7, 0.7, 0.7);
+                                            parent.color = Qt.rgba(0, 0, 0, 0.7);
                                         }
 
                                         onReleased: {
                                             if (!containsMouse) {
-                                                parent.color = Qt.rgba(1, 1, 1, 0.5);
+                                                parent.color = Qt.rgba(0, 0, 0, 0.5);
                                             }
                                         }
 
                                         onEntered: {
-                                            parent.color = Qt.rgba(0.9, 0.9, 0.9, 0.6);
+                                            parent.color = Qt.rgba(0, 0, 0, 0.6);
                                         }
 
                                         onExited: {
-                                            parent.color = Qt.rgba(1, 1, 1, 0.5);
+                                            parent.color = Qt.rgba(0, 0, 0, 0.5);
                                         }
                                     }
+
 
                                     Timer {
                                         id: timer
@@ -948,7 +949,7 @@ FocusScope {
                                                 gameToLaunch.launch();
                                                 gameToLaunch = null;
                                             }
-                                            playGameButton.color = Qt.rgba(1, 1, 1, 0.5);
+                                            playGameButton.color = Qt.rgba(0, 0, 0, 0.5);
                                         }
                                     }
 
@@ -1009,11 +1010,12 @@ FocusScope {
                                             }
                                         }
 
-                                        onPressed: parent.color = Qt.rgba(0.7, 0.7, 0.7, 0.7)
-                                        onReleased: parent.color = containsMouse ? Qt.rgba(0.9, 0.9, 0.9, 0.6) : Qt.rgba(1, 1, 1, 0.5)
-                                        onEntered: parent.color = Qt.rgba(0.9, 0.9, 0.9, 0.6)
-                                        onExited: parent.color = Qt.rgba(1, 1, 1, 0.5)
+                                        onPressed: parent.color = Qt.rgba(0, 0, 0, 0.7)
+                                        onReleased: parent.color = containsMouse ? Qt.rgba(0, 0, 0, 0.6) : Qt.rgba(0, 0, 0, 0.5)
+                                        onEntered: parent.color = Qt.rgba(0, 0, 0, 0.6)
+                                        onExited: parent.color = Qt.rgba(0, 0, 0, 0.5)
                                     }
+
 
                                     Behavior on opacity {
                                         NumberAnimation {
@@ -1061,13 +1063,14 @@ FocusScope {
                                                     var originalGame = collection.games.get(i);
                                                     if (originalGame.title === currentgame.title) {
                                                         originalGame.favorite = !originalGame.favorite;
-                                                        //console.log("Favorito actualizado (botón):", originalGame.title, originalGame.favorite);
 
                                                         currentgame.favorite = originalGame.favorite;
                                                         favoriteButton.isFavorite = originalGame.favorite;
                                                         gameActionBar.availableFilters = GameFilters.getAvailableFilters(collection);
+
                                                         if (gameActionBar.favoriteButton) {
-                                                            gameActionBar.favoriteButton.buttonText = currentgame.favorite ? "Favorite -" : "Favorite +";
+                                                            gameActionBar.favoriteButton.buttonText =
+                                                            currentgame.favorite ? "Favorite -" : "Favorite +";
                                                         }
 
                                                         proxyModel.invalidate();
@@ -1082,10 +1085,10 @@ FocusScope {
                                             }
                                         }
 
-                                        onPressed: parent.color = Qt.rgba(0.7, 0.7, 0.7, 0.7)
-                                        onReleased: parent.color = containsMouse ? Qt.rgba(0.9, 0.9, 0.9, 0.6) : Qt.rgba(1, 1, 1, 0.5)
-                                        onEntered: parent.color = Qt.rgba(0.9, 0.9, 0.9, 0.6)
-                                        onExited: parent.color = Qt.rgba(1, 1, 1, 0.5)
+                                        onPressed: parent.color = Qt.rgba(0, 0, 0, 0.7)
+                                        onReleased: parent.color = containsMouse ? Qt.rgba(0, 0, 0, 0.6) : Qt.rgba(0, 0, 0, 0.5)
+                                        onEntered: parent.color = Qt.rgba(0, 0, 0, 0.6)
+                                        onExited: parent.color = Qt.rgba(0, 0, 0, 0.5)
                                     }
 
                                     Behavior on opacity {
