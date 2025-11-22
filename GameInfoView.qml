@@ -343,8 +343,9 @@ Item {
                             }
                             text: currentgame ? Utils.formatGameDescription(currentgame.description) : ""
                             width: parent.width - (parent.sidePadding * 2)
+                            lineHeight: 1.2
                             wrapMode: Text.Wrap
-                            font.pixelSize: autoscroll.width * 0.025
+                            font.pixelSize: autoscroll.width * 0.027
                             color: "white"
                             layer.enabled: true
                             layer.effect: DropShadow {

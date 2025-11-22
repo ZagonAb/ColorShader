@@ -296,6 +296,14 @@ FocusScope {
                     }
                 }
             }
+
+            NoiseEffect {
+                id: noiSe
+                anchors.fill: parent
+                noiseIntensity: 0.03
+                noiseOpacity: 0.5
+                visible: true
+            }
         }
 
         SystemLogo {
