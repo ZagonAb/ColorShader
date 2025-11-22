@@ -68,8 +68,8 @@ Item {
     Image {
         id: batteryIcon
         source: getBatteryIcon()
-        width: root.width * 0.025
-        height: root.height * 0.035
+        width: root.width * 0.1
+        height: root.height * 0.04
         fillMode: Image.PreserveAspectFit
         mipmap: true
         asynchronous: true
