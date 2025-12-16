@@ -21,6 +21,7 @@ Item {
 
     property string _activeShortName: ""
     property bool _animationInProgress: false
+    property bool _useDefault: false
 
     Item {
         id: imageContainer
@@ -31,7 +32,15 @@ Item {
         Image {
             id: systemLogo
             anchors.fill: parent
-            source: _activeShortName !== "" ? "assets/logos/" + _activeShortName + ".png" : ""
+            source: {
+                if (_activeShortName !== "") {
+                    if (_useDefault) {
+                        return "assets/logos/default.png";
+                    }
+                    return "assets/logos/" + _activeShortName + ".png";
+                }
+                return "";
+            }
             fillMode: Image.PreserveAspectFit
             asynchronous: true
             mipmap: true
@@ -41,8 +50,8 @@ Item {
             opacity: 0.1
 
             onStatusChanged: {
-                if (status === Image.Error && _activeShortName !== "") {
-                    source = "assets/logos/default.png"
+                if (status === Image.Error && _activeShortName !== "" && !_useDefault) {
+                    _useDefault = true;
                 }
             }
         }
@@ -81,6 +90,7 @@ Item {
             script: {
                 _animationInProgress = true;
                 _activeShortName = "";
+                _useDefault = false;
                 imageContainer.opacity = 0;
                 imageContainer.scale = 0.5;
             }
