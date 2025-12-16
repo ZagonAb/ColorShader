@@ -866,15 +866,22 @@ FocusScope {
                                     anchors.centerIn: parent
                                     text: game ? game.title : ""
                                     color: "white"
-                                    font.pixelSize: parent.width * 0.1
+                                    font.pixelSize: parent.width * 0.08
                                     font.bold: true
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
                                     wrapMode: Text.Wrap
                                     width: parent.width * 0.9
                                     visible: {
-                                        return (!boxfront.source || boxfront.status === Image.Error) &&
-                                        (!logoOverlay.source || logoOverlay.status === Image.Error)
+                                        var noScreenshot = !boxfront.source ||
+                                        boxfront.source === "" ||
+                                        boxfront.status === Image.Error ||
+                                        boxfront.status === Image.Null;
+                                        var noLogo = !logoOverlay.source ||
+                                        logoOverlay.source === "" ||
+                                        logoOverlay.status === Image.Error ||
+                                        logoOverlay.status === Image.Null;
+                                        return noScreenshot && noLogo;
                                     }
                                 }
 
