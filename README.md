@@ -9,8 +9,11 @@
 - **Screensaver mode:** Rotates screenshots with system logos after inactivity.
 - **Filtering:** Filters game collections by Favorites or Continue Playing.
 
-### Customization  
-- Colors: Edit `ColorMapping.qml`.
+# RetroArch sounds and resources:
+
+- The sound effects used in this project come from [libretro](https://github.com/libretro/retroarch-assets/tree/master/sounds) under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/deed.en) license.
+
+
 
 ### 🛠️ Installation  
 [Download](https://github.com/ZagonAb/ColorShader/archive/refs/heads/main.zip) and extract the theme into your [themes directory](http://pegasus-frontend.org/docs/user-guide/installing-themes). You can then select it in Pegasus' settings menu.

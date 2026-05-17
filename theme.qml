@@ -300,7 +300,7 @@ FocusScope {
             NoiseEffect {
                 id: noiSe
                 anchors.fill: parent
-                noiseIntensity: 0.03
+                noiseIntensity: 0.05
                 noiseOpacity: 0.5
                 visible: true
             }
@@ -454,7 +454,7 @@ FocusScope {
                         mainMenuFocused = false;
                         gamesGridVisible = true;
                         gamesGridFocused = true;
-                        soundEffects.playChange();
+                        soundEffects.playOk();
                         currentgame = gameGrid.model.get(gameGrid.currentIndex);
                         if (gameGrid.currentItem && gameGrid.currentItem.updateVideoState) {
                             gameGrid.currentItem.updateVideoState();
@@ -483,7 +483,9 @@ FocusScope {
             Keys.onLeftPressed: {
                 if (currentIndex > 0) {
                     currentIndex--;
-                    soundEffects.playChange()
+                    soundEffects.playLeft()
+                } else {
+                        soundEffects.playStop();
                 }
 
                 if (screensaver.screensaverActive) {
@@ -495,7 +497,9 @@ FocusScope {
             Keys.onRightPressed: {
                 if (currentIndex < count - 1) {
                     currentIndex++;
-                    soundEffects.playChange();
+                    soundEffects.playRight();
+                } else {
+                    soundEffects.playStop();
                 }
 
                 if (screensaver.screensaverActive) {
@@ -1256,7 +1260,7 @@ FocusScope {
                 Keys.onLeftPressed: {
                     if (currentIndex > 0) {
                         currentIndex--;
-                        soundEffects.playChange()
+                        soundEffects.playLeft()
                     }
 
                     if (screensaver.screensaverActive) {
@@ -1268,9 +1272,37 @@ FocusScope {
                 Keys.onRightPressed: {
                     if (currentIndex < count - 1) {
                         currentIndex++;
-                        soundEffects.playChange()
+                        soundEffects.playRight()
                     }
 
+                    if (screensaver.screensaverActive) {
+                        screensaver.stopScreensaver();
+                    }
+                    screensaver.resetInactivityTimer();
+                }
+
+                Keys.onUpPressed: {
+                    var newIndex = currentIndex - gameGrid.columns;
+                    if (newIndex >= 0) {
+                        currentIndex = newIndex;
+                        soundEffects.playUp();
+                    } else {
+                        soundEffects.playStop();
+                    }
+                    if (screensaver.screensaverActive) {
+                        screensaver.stopScreensaver();
+                    }
+                    screensaver.resetInactivityTimer();
+                }
+
+                Keys.onDownPressed: {
+                    var newIndex = currentIndex + gameGrid.columns;
+                    if (newIndex < count) {
+                        currentIndex = newIndex;
+                        soundEffects.playDown();
+                    } else {
+                        soundEffects.playStop();
+                    }
                     if (screensaver.screensaverActive) {
                         screensaver.stopScreensaver();
                     }
@@ -1309,7 +1341,7 @@ FocusScope {
                                 gameActionBar.currentFilter,
                                 gameActionBar.availableFilters
                             );
-                            soundEffects.playChange();
+                            soundEffects.playOk();
                             proxyModel.invalidate();
 
                             if (gameGrid.count > 0) {
@@ -1322,7 +1354,7 @@ FocusScope {
                         }
                         else if (api.keys.isDetails(event)) {
                             event.accepted = true;
-                            soundEffects.playChange();
+                            soundEffects.playFav();
 
                             if (currentgame) {
                                 var collection = api.collections.get(collectionsListView.currentIndex);
