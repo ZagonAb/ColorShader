@@ -733,7 +733,7 @@ FocusScope {
                                     anchors.fill: boxfront
                                     source: boxfront
                                     maskSource: mask
-                                    visible: tru
+                                    visible: true
                                 }
 
                                 FastBlur {
