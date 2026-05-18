@@ -21,7 +21,7 @@ Item {
 
     SoundEffect {
         id: buttonSound
-        source: "assets/sound/change.wav"
+        source: "assets/sound/ok.wav"
         volume: 0.5
     }
 
@@ -99,7 +99,6 @@ Item {
                 mainMenuFocused = true
                 gamesGridVisible = false
                 gamesGridFocused = false
-                backSound.play()
             }
         }
     }
