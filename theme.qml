@@ -926,7 +926,7 @@ FocusScope {
 
                                         onClicked: {
                                             parent.color = Qt.rgba(0, 0, 0, 0.7);
-                                            soundEffects.playChange();
+                                            soundEffects.playOk();
                                             var sourceIndex = proxyModel.mapToSource(gameGrid.currentIndex);
                                             var sourceModel = api.collections.get(collectionsListView.currentIndex).games;
                                             if (sourceModel && sourceIndex >= 0 && sourceIndex < sourceModel.count) {
@@ -1020,7 +1020,7 @@ FocusScope {
                                         hoverEnabled: true
 
                                         onClicked: {
-                                            soundEffects.playChange();
+                                            soundEffects.playOk();
                                             muteButton.isMuted = !muteButton.isMuted;
                                             api.memory.set('videoMuted', muteButton.isMuted);
 
@@ -1075,7 +1075,7 @@ FocusScope {
                                         hoverEnabled: true
 
                                         onClicked: {
-                                            soundEffects.playChange();
+                                            soundEffects.playFav();
                                             if (currentgame) {
                                                 var collection = api.collections.get(collectionsListView.currentIndex);
                                                 for (var i = 0; i < collection.games.count; i++) {
