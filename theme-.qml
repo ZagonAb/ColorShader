@@ -550,6 +550,15 @@ FocusScope {
 
                 cacheBuffer: 200
 
+                Connections {
+                    target: game
+                    function onPlayTimeChanged() {
+                        if (playTimeIndicator) {
+                            playTimeIndicator.playTimeSeconds = game.playTime;
+                        }
+                    }
+                }
+
                 model: SortFilterProxyModel {
                     id: proxyModel
                     sourceModel: api.collections.get(collectionsListView.currentIndex).games
@@ -641,9 +650,8 @@ FocusScope {
 
                     function updateGame() {
                         game = gameGrid.model.get(index);
-                        var indicator = loader.item ? loader.item.playTimeIndicator : null;
-                        if (indicator) {
-                            indicator.playTimeSeconds = game ? game.playTime : 0;
+                        if (playTimeIndicator) {
+                            playTimeIndicator.playTimeSeconds = game ? game.playTime : 0;
                         }
                     }
 
@@ -690,7 +698,6 @@ FocusScope {
                             color: "black"
 
                             property alias videoLoader: videoLoader
-                            property alias playTimeIndicator: playTimeIndicator
 
                             Item {
                                 anchors.fill: parent
