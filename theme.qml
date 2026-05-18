@@ -463,13 +463,17 @@ FocusScope {
                         event.accepted = true;
                         if (currentIndex < count - 1) {
                             currentIndex++;
-                            soundEffects.playChange();
+                            soundEffects.playRight();
+                        } else {
+                            soundEffects.playStop();
                         }
                     } else if (api.keys.isPrevPage(event)) {
                         event.accepted = true;
                         if (currentIndex > 0) {
                             currentIndex--;
-                            soundEffects.playChange();
+                            soundEffects.playLeft();
+                        } else {
+                            soundEffects.playStop();
                         }
                     }
 
