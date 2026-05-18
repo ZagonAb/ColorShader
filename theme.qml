@@ -1220,7 +1220,6 @@ FocusScope {
                 }
 
                 onCurrentIndexChanged: {
-                    soundEffects.playChange();
                     var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
 
                     if (selectedGame) {
