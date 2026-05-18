@@ -782,6 +782,7 @@ FocusScope {
                                                 videoOutput: videoOutput
                                                 loops: 1
                                                 autoPlay: true
+                                                volume: 0.1
                                                 muted: api.memory.get('videoMuted') || false
 
                                                 onStatusChanged: {
