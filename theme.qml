@@ -550,14 +550,14 @@ FocusScope {
 
                 cacheBuffer: 200
 
-                Connections {
+                /*Connections {
                     target: game
                     function onPlayTimeChanged() {
                         if (playTimeIndicator) {
                             playTimeIndicator.playTimeSeconds = game.playTime;
                         }
                     }
-                }
+                }*/
 
                 model: SortFilterProxyModel {
                     id: proxyModel
