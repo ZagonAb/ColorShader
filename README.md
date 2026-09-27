@@ -3,7 +3,6 @@
 - **A theme for Pegasus Frontend, designed to provide an elegant and responsive gaming interface.**
 
 ![screen](https://github.com/ZagonAb/ColorShader/blob/9683306ac909af7465edaf46473b0a6962792370/.meta/screenshots/screen.png)
-![screen1](https://github.com/ZagonAb/ColorShader/blob/9683306ac909af7465edaf46473b0a6962792370/.meta/screenshots/screen1.png)
 
 
 # RetroArch sounds and resources:
