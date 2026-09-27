@@ -2,11 +2,12 @@ import QtQuick 2.15
 
 Item {
     id: logoContainer
-    width: parent.width * 0.4
-    height: parent.height * 0.3
+    width: metrics ? metrics.logoContainerWidth : parent.width * 0.4
+    height: metrics ? metrics.logoContainerHeight : parent.height * 0.3
     property real themeContainerOpacity: 1.0
     property string currentShortName: ""
     property bool visibleState: false
+    property var metrics: null
     visible: visibleState
     opacity: 0.1 * themeContainerOpacity
 
@@ -24,12 +25,6 @@ Item {
         mipmap: true
         anchors.centerIn: parent
         visible: status === Image.Ready
-
-        onStatusChanged: {
-            if (status === Image.Error) {
-                //console.log("Error cargando la imagen del logo para:", currentShortName);
-            }
-        }
     }
 
     Image {

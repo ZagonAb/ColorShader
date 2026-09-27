@@ -11,28 +11,99 @@ import "qrc:/qmlutils" as PegasusUtils
 FocusScope {
     id: root
     focus: true
+
     property var filterFunctions: GameFilters.getFilterFunctions()
     property bool screensaverActive: screensaver.screensaverActive
     property string collectionDescription: ""
     property string collectionSystemInfo: ""
     property real themeContainerOpacity: 1.0
     property string currentColor: "#333333"
-    property int inactivityTimeout: 240000
+    property int inactivityTimeout: 60000
     property bool gamesGridVisible: false
     property bool gamesGridFocused: false
+    property bool debugOverlayEnabled: false
+    property bool debugLogsEnabled: false
     property alias proxyModel: proxyModel
     property string currentScreenshot: ""
     property string currentShortName: ""
     property bool mainMenuVisible: true
     property bool mainMenuFocused: true
-    property var randomScreenshots: []
     property bool useFirstImage: true
     property string pendingSource: ""
     property var currentgame: null
     property var colorMap: ({})
 
+    readonly property string currentVersion: "1.0.0"
+    property string _pendingVersion: ""
+    property string _pendingUrl: ""
+    property string _pendingNotes: ""
+
     SoundEffects {
         id: soundEffects
+    }
+
+    function isNewerVersion(latest, current) {
+        var a = latest.split('.').map(Number);
+        var b = current.split('.').map(Number);
+        for (var i = 0; i < 3; i++) {
+            if ((a[i] || 0) > (b[i] || 0)) return true;
+            if ((a[i] || 0) < (b[i] || 0)) return false;
+        }
+        return false;
+    }
+
+    function checkForUpdates() {
+        var xhr = new XMLHttpRequest();
+        var url = "https://api.github.com/repos/ZagonAb/ColorShader/releases/latest";
+        xhr.open("GET", url, true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        var latestTag = data.tag_name || "";
+                        var latestVersion = latestTag.replace(/^v/, "");
+                        var releaseUrl = data.html_url || "";
+                        var releaseNotes = data.body || "";
+
+                        if (latestVersion && root.isNewerVersion(latestVersion, root.currentVersion)) {
+                            var lastNotified = api.memory.has('lastUpdateNotified')
+                                ? api.memory.get('lastUpdateNotified')
+                                : "";
+                            if (latestVersion !== lastNotified) {
+                                root._pendingVersion = latestVersion;
+                                root._pendingUrl = releaseUrl;
+                                root._pendingNotes = releaseNotes;
+                                api.memory.set('lastUpdateNotified', latestVersion);
+                                updateNotifyTimer.restart();
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("[THEME][checkForUpdates] Error parseando JSON:", e);
+                    }
+                } else {
+                    console.log("[THEME][checkForUpdates] Error HTTP:", xhr.status, xhr.statusText);
+                }
+            }
+        };
+        xhr.onerror = function(e) {
+            console.error("[THEME][checkForUpdates] Error de red:", e);
+        };
+        xhr.send();
+    }
+
+    Timer {
+        id: updateNotifyTimer
+        interval: 900
+        repeat: false
+        onTriggered: {
+            if (root._pendingVersion !== "") {
+                updateNotification.show(root._pendingVersion, root._pendingUrl, root._pendingNotes);
+                root._pendingVersion = "";
+                root._pendingUrl = "";
+                root._pendingNotes = "";
+            }
+        }
     }
 
     function updateCurrentColor() {
@@ -55,12 +126,92 @@ FocusScope {
         return filterFunctions[gameActionBar.currentFilter] || filterFunctions["All Games"];
     }
 
+    function loadCollectionMetadata() {
+        var systemData = myGameSystems.getSystemMetadata(currentShortName) || {};
+        var currentCollection = api.collections.get(collectionsListView.currentIndex);
+        var gameCount = currentCollection.games.count || 0;
+        gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollection);
+        collectionSystemInfo = "┌CONSOLE: " + (systemData.systemName || "None") + "┐┌" +
+        "YEAR: " + (systemData.releaseYear || "None") + "┐┌" +
+        "GAMES: " + gameCount + "┐";
+        collectionDescription = systemData.description || "No description available";
+    }
+
+    /*function saveThemeState(game) {
+        console.log("[THEME][SAVE] Guardando estado -> collectionIndex:", collectionsListView.currentIndex,
+                     "| filter:", gameActionBar.currentFilter,
+                     "| gameTitle:", (game ? game.title : "(null)"),
+                     "| screen:", (gamesGridVisible ? "games" : "collections"));
+        api.memory.set('lastCollectionIndex', collectionsListView.currentIndex);
+        api.memory.set('lastFilter', gameActionBar.currentFilter);
+        api.memory.set('lastGameTitle', game ? game.title : "");
+        api.memory.set('lastScreen', gamesGridVisible ? "games" : "collections");
+        console.log("[THEME][SAVE] Memoria tras guardar -> lastCollectionIndex:", api.memory.get('lastCollectionIndex'),
+                     "| lastFilter:", api.memory.get('lastFilter'),
+                     "| lastGameTitle:", api.memory.get('lastGameTitle'),
+                     "| lastScreen:", api.memory.get('lastScreen'));
+    }*/
+
+    function saveThemeState(game) {
+        console.log("[THEME][SAVE] Guardando estado -> collectionIndex:", collectionsListView.currentIndex,
+                    "| filter:", gameActionBar.currentFilter,
+                    "| gameTitle:", (game ? game.title : "(null)"),
+                    "| screen:", (gamesGridVisible ? "games" : "collections"));
+        api.memory.set('lastCollectionIndex', collectionsListView.currentIndex);
+        api.memory.set('lastFilter', gameActionBar.currentFilter);
+        api.memory.set('lastGameTitle', game ? game.title : "");
+        api.memory.set('lastScreen', gamesGridVisible ? "games" : "collections");
+        console.log("[THEME][SAVE] Memoria tras guardar -> lastCollectionIndex:", api.memory.get('lastCollectionIndex'),
+                    "| lastFilter:", api.memory.get('lastFilter'),
+                    "| lastGameTitle:", api.memory.get('lastGameTitle'),
+                    "| lastScreen:", api.memory.get('lastScreen'));
+    }
+
+    function clearThemeState() {
+        api.memory.set('lastCollectionIndex', 0);
+        api.memory.set('lastFilter', "All Games");
+        api.memory.set('lastGameTitle', "");
+        api.memory.set('lastScreen', "collections");
+        console.log("[THEME][CLEAR] Memoria de restauración limpiada -> vuelve a valores por defecto");
+    }
+
+    function logFinalRestoredState(tag) {
+        console.log("[THEME][RESTORE-CHECK][" + tag + "] collectionsListView.currentIndex:", collectionsListView.currentIndex,
+                     "| currentShortName:", currentShortName,
+                     "| gameActionBar.currentFilter:", gameActionBar.currentFilter,
+                     "| gameGrid.currentIndex:", gameGrid.currentIndex,
+                     "| gameGrid.count:", gameGrid.count,
+                     "| currentgame:", (currentgame ? currentgame.title : "(null)"),
+                     "| mainMenuVisible:", mainMenuVisible,
+                     "| gamesGridVisible:", gamesGridVisible);
+    }
+
+    onMainMenuVisibleChanged: {
+        if (mainMenuVisible) {
+            Qt.callLater(function() {
+                collectionsListView.positionViewAtIndex(collectionsListView.currentIndex, ListView.Center);
+                console.log("[THEME][ROOT] mainMenuVisible -> true. Reposicionando collectionsListView a index:",
+                             collectionsListView.currentIndex, "| contentX:", collectionsListView.contentX);
+            });
+        }
+    }
+
+    onGamesGridVisibleChanged: {
+        if (gamesGridVisible) {
+            Qt.callLater(function() {
+                gameGrid.positionViewAtIndex(gameGrid.currentIndex, GridView.Contain);
+                console.log("[THEME][ROOT] gamesGridVisible -> true. Reposicionando gameGrid a index:",
+                             gameGrid.currentIndex, "| contentY:", gameGrid.contentY);
+            });
+        }
+    }
+
     Timer {
+
         id: safetyTimer
         interval: 500
         onTriggered: {
             if (gameGrid.count === 0 && currentFilter === "Favorites") {
-                //console.log("[Safety Timer] No hay favoritos - Cambiando a All Games");
                 currentFilter = "All Games";
                 Qt.callLater(proxyModel.invalidate);
             }
@@ -71,29 +222,42 @@ FocusScope {
         Qt.onUncaughtError = function(error) {
             console.error("Error no capturado:", error);
             if (currentFilter === "Favorites" && proxyModel.count === 0) {
-                console.log("Recuperando de error - cambiando a All Games");
+                console.error("Recuperando de error - cambiando a All Games");
                 currentFilter = "All Games";
                 proxyModel.invalidate();
             }
         };
 
         updateCurrentColor();
-        screensaver.randomScreenshots = Utils.getRandomScreenshots(api.collections);
+        screensaver.randomGames = Utils.getRandomGames(api.collections);
+        logMetricsSnapshot();
 
+        console.log("[THEME][ROOT] Component.onCompleted del root ejecutado. api.collections.count:", api.collections.count,
+                     "| memory.has(lastCollectionIndex):", api.memory.has('lastCollectionIndex'));
+
+        Qt.callLater(function() {
+            logFinalRestoredState("root.onCompleted +1 tick");
+        });
+
+        Qt.callLater(function() {
+            root.checkForUpdates();
+        });
+    }
+
+    Components.LayoutMetrics {
+        id: metrics
+        viewportWidth: root.width
+        viewportHeight: root.height
     }
 
     Components.Screensaver {
         id: screensaver
         inactivityTimeout: root.inactivityTimeout
         visible: screensaverActive
+        metrics: metrics
 
-        onScreensaverStarted: {
-            themeContainerOpacity = 0.0;
-        }
-
-        onScreensaverStopped: {
-            themeContainerOpacity = 1.0;
-        }
+        onScreensaverStarted: themeContainerOpacity = 0.0
+        onScreensaverStopped: themeContainerOpacity = 1.0
 
         function getGameFromScreenshot(screenshot) {
             return Utils.getGameFromScreenshot(api.collections, screenshot);
@@ -108,10 +272,69 @@ FocusScope {
         id: myColorMapping
     }
 
-    Keys.onPressed: {
-        if (screensaver.screensaverActive) {
-            screensaver.stopScreensaver();
+    Timer {
+        id: metricsLogDebounce
+        interval: 250
+        repeat: false
+        onTriggered: logMetricsSnapshot()
+    }
+
+    function logMetricsSnapshot() {
+        if (!metrics || !root.debugLogsEnabled) return;
+        console.log("[LayoutMetrics] " +
+        "viewport=" + Math.round(metrics.viewportWidth) + "x" + Math.round(metrics.viewportHeight) +
+        " | aspect=" + metrics.aspectRatio.toFixed(4) +
+        " | profile=" + metrics.profile +
+        " | compact=" + metrics.compactness.toFixed(3) +
+        " | uScale=" + metrics.uniformScale.toFixed(4) +
+        " | slack=" + Math.round(metrics.horizontalSlack) + "/" + Math.round(metrics.verticalSlack) +
+        " | gridCols=" + metrics.gameGridColumns +
+        " | cell=" + Math.round(metrics.gameCellWidth) + "x" + Math.round(metrics.gameCellHeight));
+    }
+
+    Connections {
+        target: metrics
+
+        function onViewportWidthChanged()  { metricsLogDebounce.restart(); }
+        function onViewportHeightChanged() { metricsLogDebounce.restart(); }
+
+        function onProfileChanged() {
+            if (root.debugLogsEnabled)
+                console.log("[LayoutMetrics] *** PROFILE CHANGED → " + metrics.profile + " ***");
+            metricsLogDebounce.restart();
         }
+
+        function onGameGridColumnsChanged() {
+            if (root.debugLogsEnabled)
+                console.log("[Grid] *** COLUMNS CHANGED → " + metrics.gameGridColumns +
+                " | cell=" + Math.round(metrics.gameCellWidth) + "x" + Math.round(metrics.gameCellHeight) +
+                " | pageSize=" + metrics.gameGridPageSize + " ***");
+        }
+
+        function onCollectionItemScaleSelectedChanged() {
+            if (root.debugLogsEnabled)
+                console.log("[Collections] itemScaleSelected=" +
+                metrics.collectionItemScaleSelected.toFixed(2) +
+                " | itemWidth=" + Math.round(metrics.collectionItemWidth) +
+                " | itemHeight=" + Math.round(metrics.collectionItemHeight) +
+                " | isCompact=" + metrics.isCompact);
+        }
+    }
+
+    Components.LayoutDebugPanel {
+        id: layoutDebug
+        visible: root.debugOverlayEnabled
+        metrics: metrics
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: 20
+        anchors.bottomMargin: 20
+        z: 5000
+    }
+
+    Keys.onPressed: {
+        if (screensaver.screensaverActive)
+            screensaver.stopScreensaver();
         screensaver.resetInactivityTimer();
     }
 
@@ -119,10 +342,8 @@ FocusScope {
         anchors.fill: parent
         hoverEnabled: true
         onPositionChanged: {
-            if (screensaver.screensaverActive) {
-                screensaver.stopScreensaver();
-            }
-            screensaver.resetInactivityTimer();
+            if (!screensaver.screensaverActive)
+                screensaver.resetInactivityTimer();
         }
     }
 
@@ -136,9 +357,9 @@ FocusScope {
             anchors.fill: parent
             onPaint: {
                 var ctx = gradientCanvas.getContext('2d');
-                var gradCenterX = 9;
-                var gradCenterY = height;
-                var gradRadius = Math.max(width, height)
+                var gradCenterX = metrics.gradientCenterX;
+                var gradCenterY = metrics.gradientCenterY;
+                var gradRadius = Math.max(width, height);
 
                 var gradient = ctx.createRadialGradient(gradCenterX, gradCenterY, 0, gradCenterX, gradCenterY, gradRadius);
                 gradient.addColorStop(0.1, "#000000");
@@ -155,6 +376,7 @@ FocusScope {
         id: themeContainer
         anchors.fill: parent
         opacity: themeContainerOpacity
+        enabled: !updateNotification.active
 
         Behavior on opacity {
             NumberAnimation { duration: 1000 }
@@ -174,25 +396,21 @@ FocusScope {
                 opacity: useFirstImage ? 1 : 0.5
 
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: 800
-                        easing.type: Easing.InOutQuad
-                    }
+                    NumberAnimation { duration: 800; easing.type: Easing.InOutQuad }
                 }
 
                 Image {
                     id: screenshotImage1
                     anchors.fill: parent
-                    fillMode: Image.Stretch
+                    fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     visible: false
                 }
 
-
                 FastBlur {
                     anchors.fill: parent
                     source: screenshotImage1
-                    radius: 80
+                    radius: metrics.backgroundBlurRadius
                     visible: true
                     cached: true
                 }
@@ -204,16 +422,13 @@ FocusScope {
                 opacity: !useFirstImage ? 1 : 0.5
 
                 Behavior on opacity {
-                    NumberAnimation {
-                        duration: 800
-                        easing.type: Easing.InOutQuad
-                    }
+                    NumberAnimation { duration: 800; easing.type: Easing.InOutQuad }
                 }
 
                 Image {
                     id: screenshotImage2
                     anchors.fill: parent
-                    fillMode: Image.Stretch
+                    fillMode: Image.PreserveAspectCrop
                     asynchronous: true
                     visible: false
                 }
@@ -221,7 +436,7 @@ FocusScope {
                 FastBlur {
                     anchors.fill: parent
                     source: screenshotImage2
-                    radius: 80
+                    radius: metrics.backgroundBlurRadius
                     visible: true
                     cached: true
                 }
@@ -231,7 +446,7 @@ FocusScope {
                 id: gradientLinear
                 visible: true
                 width: parent.width
-                height: parent.height * 0.25
+                height: metrics.backgroundGradientHeight
                 anchors.bottom: parent.bottom
                 anchors.right: parent.right
                 start: Qt.point(0, height)
@@ -311,16 +526,17 @@ FocusScope {
             currentShortName: root.currentShortName
             themeContainerOpacity: root.themeContainerOpacity
             visible: mainMenuVisible
+            metrics: metrics
         }
 
         ListView {
             id: collectionsListView
-            width: parent.width * 0.90
-            height: parent.height * 0.30
+            width: metrics.collectionListWidth
+            height: metrics.collectionListHeight
             anchors.centerIn: parent
             model: api.collections
             orientation: Qt.Horizontal
-            spacing: Math.max(5, width * 0.01)
+            spacing: metrics.collectionListSpacing
             visible: mainMenuVisible
             property int indexToPosition: -1
 
@@ -342,17 +558,16 @@ FocusScope {
             delegate: Item {
                 id: itemRectangle
                 property bool selected: ListView.isCurrentItem
-                width: collectionsListView.width * 0.13
-                height: collectionsListView.height * 0.90
-                scale: selected && collectionsListView.focus ? 1.50 : 1.0
+                width: metrics.collectionItemWidth
+                height: metrics.collectionItemHeight
+                scale: (selected && collectionsListView.focus)
+                ? metrics.collectionItemScaleSelected
+                : metrics.collectionItemScaleNormal
                 clip: false
                 z: selected ? 1 : 0
 
                 Behavior on scale {
-                    NumberAnimation {
-                        duration: 150
-                        easing.type: Easing.OutQuad
-                    }
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
 
                 Behavior on opacity {
@@ -373,9 +588,8 @@ FocusScope {
                     asynchronous: true
 
                     onStatusChanged: {
-                        if (status === Image.Error) {
+                        if (status === Image.Error)
                             source = "assets/systems/default.png";
-                        }
                     }
 
                     Text {
@@ -383,21 +597,19 @@ FocusScope {
                         text: model.shortName
                         color: "white"
                         visible: shortNameImage.status !== Image.Ready
-                        font.pixelSize: root.width * 0.012
+                        font.pixelSize: metrics.collectionFallbackFontSize
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
 
                     Behavior on scale {
-                        NumberAnimation {
-                            duration: 1000
-                            easing.type: Easing.InOutQuad
-                        }
+                        NumberAnimation { duration: 1000; easing.type: Easing.InOutQuad }
                     }
 
                     SequentialAnimation {
                         running: selected
                         loops: Animation.Infinite
+
                         PropertyAnimation {
                             target: shortNameImage
                             property: "y"
@@ -419,29 +631,154 @@ FocusScope {
             }
 
             onCurrentIndexChanged: {
+                console.log("[THEME][COLLECTIONS] onCurrentIndexChanged -> nuevo currentIndex:", currentIndex);
                 indexToPosition = currentIndex;
                 currentShortName = model.get(currentIndex).shortName;
                 updateCurrentColor();
                 loadCollectionMetadata();
+
                 var currentCollection = api.collections.get(currentIndex);
                 gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollection);
                 gameActionBar.currentFilter = "All Games";
 
-                if (collectionInfo.autoscroll) {
+                if (collectionInfo.autoscroll)
                     collectionInfo.autoscroll.restart();
-                }
             }
 
             Component.onCompleted: {
-                currentIndex = 0
-                currentShortName = model.get(currentIndex).shortName
-                updateCurrentColor()
+                console.log("[THEME][COLLECTIONS] Component.onCompleted disparado. model.count:", model.count,
+                             "| memory.has(lastCollectionIndex):", api.memory.has('lastCollectionIndex'));
+
+                var restoredIndex = 0;
+                if (api.memory.has('lastCollectionIndex')) {
+                    var saved = api.memory.get('lastCollectionIndex');
+                    console.log("[THEME][COLLECTIONS] Valor guardado en memoria -> lastCollectionIndex:", saved,
+                                 "(tipo:", typeof saved, ")");
+                    if (typeof saved === "number" && saved >= 0 && saved < model.count) {
+                        restoredIndex = saved;
+                    } else {
+                        console.log("[THEME][COLLECTIONS] Valor guardado inválido o fuera de rango (model.count=" + model.count + "), usando 0");
+                    }
+                } else {
+                    console.log("[THEME][COLLECTIONS] No hay 'lastCollectionIndex' en memoria (primer arranque), usando 0 por defecto");
+                }
+
+                currentIndex = restoredIndex;
+                currentShortName = model.get(currentIndex).shortName;
+                updateCurrentColor();
+
+                console.log("[THEME][COLLECTIONS] currentIndex final tras onCompleted:", currentIndex,
+                             "| currentShortName:", currentShortName);
+
+                var currentCollectionForFilter = api.collections.get(currentIndex);
+                gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollectionForFilter);
+
+                if (api.memory.has('lastFilter')) {
+                    var savedFilter = api.memory.get('lastFilter');
+                    console.log("[THEME][COLLECTIONS] Valor guardado en memoria -> lastFilter:", savedFilter,
+                                 "| availableFilters:", JSON.stringify(gameActionBar.availableFilters));
+                    if (gameActionBar.availableFilters.indexOf(savedFilter) !== -1) {
+                        gameActionBar.currentFilter = savedFilter;
+                        console.log("[THEME][COLLECTIONS] Filtro restaurado:", savedFilter);
+                    } else {
+                        gameActionBar.currentFilter = "All Games";
+                        console.log("[THEME][COLLECTIONS] Filtro guardado no disponible en esta colección, usando 'All Games'");
+                    }
+                } else {
+                    gameActionBar.currentFilter = "All Games";
+                }
+
+                proxyModel.invalidate();
+
+                console.log("[THEME][COLLECTIONS] Tras invalidate() -> gameGrid.model.count:", gameGrid.model.count);
+                var savedGameTitle = api.memory.has('lastGameTitle') ? api.memory.get('lastGameTitle') : "";
+                var savedScreen = api.memory.has('lastScreen') ? api.memory.get('lastScreen') : "collections";
+                console.log("[THEME][COLLECTIONS] savedGameTitle:", savedGameTitle, "| savedScreen:", savedScreen);
+
+                var gridCount = gameGrid.model.count;
+                var restoredGameIndex = 0;
+
+                if (gridCount > 0) {
+                    if (savedGameTitle) {
+                        var found = false;
+                        for (var i = 0; i < gridCount; i++) {
+                            var g = gameGrid.model.get(i);
+                            if (g && g.title === savedGameTitle) {
+                                restoredGameIndex = i;
+                                found = true;
+                                break;
+                            }
+                        }
+                        console.log("[THEME][COLLECTIONS] Búsqueda de '" + savedGameTitle + "' -> encontrado:", found,
+                                     "| índice:", restoredGameIndex);
+                    }
+
+                    gameGrid.currentIndex = restoredGameIndex;
+                    currentgame = gameGrid.model.get(restoredGameIndex);
+                    console.log("[THEME][COLLECTIONS] gameGrid.currentIndex final:", gameGrid.currentIndex,
+                                 "| currentgame:", (currentgame ? currentgame.title : "(null)"));
+                } else {
+                    console.log("[THEME][COLLECTIONS] gridCount es 0, no hay juego para restaurar");
+                }
+
+                if (savedScreen === "games" && gridCount > 0) {
+                    mainMenuVisible = false;
+                    mainMenuFocused = false;
+                    gamesGridVisible = true;
+                    gamesGridFocused = true;
+                    console.log("[THEME][COLLECTIONS] Pantalla restaurada a 'games'");
+                } else {
+                    console.log("[THEME][COLLECTIONS] Pantalla se mantiene en 'collections'");
+                }
+
+                var restoreCollectionIndex = collectionsListView.currentIndex;
+                var restoreGameIndex = gameGrid.currentIndex;
+                var restoreGridHadItems = gridCount > 0;
+
+                /*Qt.callLater(function() {
+                    Qt.callLater(function() {
+                        console.log("[THEME][COLLECTIONS] Reposicionando vistas -> collection:", restoreCollectionIndex,
+                                     "| game:", restoreGameIndex);
+
+                        collectionsListView.positionViewAtIndex(restoreCollectionIndex, ListView.Center);
+
+                        if (restoreGridHadItems) {
+                            gameGrid.positionViewAtIndex(restoreGameIndex, GridView.Contain);
+                            if (gameGrid.currentItem && gameGrid.currentItem.updateVideoState)
+                                gameGrid.currentItem.updateVideoState();
+                        }
+
+                        console.log("[THEME][COLLECTIONS] Reposicionamiento visual completado -> " +
+                                     "collectionsListView.contentX:", collectionsListView.contentX,
+                                     "| gameGrid.contentY:", gameGrid.contentY);
+                    });
+                });*/
+
+                Qt.callLater(function() {
+                    Qt.callLater(function() {
+                        console.log("[THEME][COLLECTIONS] Reposicionando vistas -> collection:", restoreCollectionIndex,
+                                    "| game:", restoreGameIndex);
+
+                        collectionsListView.positionViewAtIndex(restoreCollectionIndex, ListView.Center);
+
+                        if (restoreGridHadItems) {
+                            gameGrid.positionViewAtIndex(restoreGameIndex, GridView.Contain);
+                            if (gameGrid.currentItem && gameGrid.currentItem.updateVideoState)
+                                gameGrid.currentItem.updateVideoState();
+                        }
+
+                        console.log("[THEME][COLLECTIONS] Reposicionamiento visual completado -> " +
+                        "collectionsListView.contentX:", collectionsListView.contentX,
+                        "| gameGrid.contentY:", gameGrid.contentY);
+
+                        clearThemeState();
+                    });
+                });
             }
 
             onIndexToPositionChanged: {
-                if (indexToPosition >= 0) {
-                    positionViewAtIndex(indexToPosition, ListView.Center)
-                }
+                if (indexToPosition >= 0)
+                    positionViewAtIndex(indexToPosition, ListView.Center);
             }
 
             focus: mainMenuFocused
@@ -456,9 +793,8 @@ FocusScope {
                         gamesGridFocused = true;
                         soundEffects.playOk();
                         currentgame = gameGrid.model.get(gameGrid.currentIndex);
-                        if (gameGrid.currentItem && gameGrid.currentItem.updateVideoState) {
+                        if (gameGrid.currentItem && gameGrid.currentItem.updateVideoState)
                             gameGrid.currentItem.updateVideoState();
-                        }
                     } else if (api.keys.isNextPage(event)) {
                         event.accepted = true;
                         if (currentIndex < count - 1) {
@@ -477,9 +813,8 @@ FocusScope {
                         }
                     }
 
-                    if (screensaver.screensaverActive) {
+                    if (screensaver.screensaverActive)
                         screensaver.stopScreensaver();
-                    }
                 }
                 screensaver.resetInactivityTimer();
             }
@@ -487,14 +822,12 @@ FocusScope {
             Keys.onLeftPressed: {
                 if (currentIndex > 0) {
                     currentIndex--;
-                    soundEffects.playLeft()
+                    soundEffects.playLeft();
                 } else {
-                        soundEffects.playStop();
+                    soundEffects.playStop();
                 }
-
-                if (screensaver.screensaverActive) {
+                if (screensaver.screensaverActive)
                     screensaver.stopScreensaver();
-                }
                 screensaver.resetInactivityTimer();
             }
 
@@ -505,15 +838,14 @@ FocusScope {
                 } else {
                     soundEffects.playStop();
                 }
-
-                if (screensaver.screensaverActive) {
+                if (screensaver.screensaverActive)
                     screensaver.stopScreensaver();
-                }
                 screensaver.resetInactivityTimer();
             }
         }
 
-        Rectangle{
+        Rectangle {
+            id: gameGridContainer
 
             anchors {
                 horizontalCenter: parent.horizontalCenter
@@ -521,7 +853,7 @@ FocusScope {
             }
 
             width: parent.width
-            height: parent.height / 2
+            height: metrics.gameGridContainerHeight
             color: "transparent"
             clip: true
             visible: gamesGridVisible
@@ -539,14 +871,14 @@ FocusScope {
                     bottom: parent.bottom
                 }
 
-                width: parent.width * 0.90
-                height: parent.height * 0.98
+                width: metrics.gameGridWidth
+                height: metrics.gameGridHeight
 
-                property int columns: 4
-                property int rows: 2
+                property int columns: metrics.gameGridColumns
+                property int rows: metrics.gameGridRows
 
-                cellWidth: width / columns
-                cellHeight: height / rows
+                cellWidth: metrics.gameCellWidth
+                cellHeight: metrics.gameCellHeight
 
                 cacheBuffer: 200
 
@@ -575,22 +907,26 @@ FocusScope {
                     ]
 
                     onCountChanged: {
+                        console.log("[THEME][PROXYMODEL] onCountChanged -> count:", count,
+                                     "| collectionsListView.currentIndex:", collectionsListView.currentIndex,
+                                     "| gameActionBar.currentFilter:", gameActionBar.currentFilter,
+                                     "| gameGrid.currentIndex:", gameGrid.currentIndex);
                         if (count > 0) {
-                            if (gameGrid.currentIndex >= count) {
+                            if (gameGrid.currentIndex >= count)
                                 gameGrid.currentIndex = count - 1;
-                            }
                             currentgame = gameGrid.model.get(gameGrid.currentIndex);
                         } else {
                             currentgame = null;
 
                             if (gameActionBar.currentFilter === "Favorites") {
-                                console.log("Lista de favoritos vacía - cambiando a All Games");
+                                if (root.debugLogsEnabled)
+                                    console.log("Lista de favoritos vacía - cambiando a All Games");
                                 gameActionBar.currentFilter = "All Games";
                                 Qt.callLater(proxyModel.invalidate);
                             } else {
-                                currentgame = null;
                                 if (gameActionBar.currentFilter === "Favorites") {
-                                    console.log("Lista vacía - Activando timer de seguridad");
+                                    if (root.debugLogsEnabled)
+                                        console.log("Lista vacía - Activando timer de seguridad");
                                     safetyTimer.restart();
                                 }
                             }
@@ -599,22 +935,27 @@ FocusScope {
                 }
 
                 Component.onCompleted: {
+                    console.log("[THEME][GAMEGRID] Component.onCompleted disparado (estado por defecto, provisional). count:", count,
+                                 "| collectionsListView.currentIndex:", collectionsListView.currentIndex,
+                                 "| Nota: la restauración real ocurre en collectionsListView.onCompleted, que puede disparar después.");
+
                     if (count > 0) {
                         currentIndex = 0;
                         currentgame = model.get(0);
                         Qt.callLater(function() {
-                            if (currentItem && currentItem.updateVideoState) {
+                            if (currentItem && currentItem.updateVideoState)
                                 currentItem.updateVideoState();
-                            }
                         });
                     }
                 }
 
                 delegate: Item {
                     id: delegateRoot
-                    width: gameGrid.cellWidth - gameGrid.cellWidth * 0.030
-                    height: gameGrid.cellHeight - gameGrid.cellHeight * 0.050
-                    scale: selected && gameGrid.focus ? 1.05 : 1
+                    width: metrics.gameCellContentWidth
+                    height: metrics.gameCellContentHeight
+                    scale: (selected && gameGrid.focus)
+                    ? metrics.gameCardScaleSelected
+                    : metrics.gameCardScaleNormal
                     property bool selected: GridView.isCurrentItem
                     property var game
                     property bool isVisible: {
@@ -627,24 +968,18 @@ FocusScope {
                     opacity: isVisible ? 1 : 0
 
                     Behavior on scale {
-                        NumberAnimation {
-                            duration: 150
-                            easing.type: Easing.OutQuad
-                        }
+                        NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                     }
 
                     z: selected ? 1 : 0
 
-                    Component.onCompleted: {
-                        updateGame();
-                    }
+                    Component.onCompleted: updateGame()
 
                     function updateGame() {
                         game = gameGrid.model.get(index);
                         var indicator = loader.item ? loader.item.playTimeIndicator : null;
-                        if (indicator) {
+                        if (indicator)
                             indicator.playTimeSeconds = game ? game.playTime : 0;
-                        }
                     }
 
                     function updateVideoState() {
@@ -653,9 +988,8 @@ FocusScope {
                             var output = loader.item.videoLoader.item.videoOutput;
 
                             if (selected && gameGrid.activeFocus) {
-                                if (!player.source) {
+                                if (!player.source)
                                     player.source = game.assets.video;
-                                }
                                 player.play();
                                 player.muted = api.memory.get('videoMuted') || false;
                                 output.visible = true;
@@ -672,6 +1006,8 @@ FocusScope {
                         target: gameGrid
                         function onCurrentIndexChanged() {
                             delegateRoot.updateGame();
+                        }
+                        function onSelectionCommitted() {
                             delegateRoot.updateVideoState();
                         }
                         function onActiveFocusChanged() {
@@ -683,10 +1019,11 @@ FocusScope {
                         id: loader
                         anchors.fill: parent
                         active: gamesGridVisible && isVisible
+
                         sourceComponent: Rectangle {
                             id: backgroundRect
                             anchors.fill: parent
-                            radius: 10
+                            radius: metrics.gameCardRadius
                             color: "black"
 
                             property alias videoLoader: videoLoader
@@ -699,7 +1036,7 @@ FocusScope {
                                 Rectangle {
                                     id: mask
                                     anchors.fill: parent
-                                    radius: 10
+                                    radius: metrics.gameCardRadius
                                     visible: false
                                 }
 
@@ -717,7 +1054,7 @@ FocusScope {
                                         maskSource: Rectangle {
                                             width: backgroundRect.width
                                             height: backgroundRect.height
-                                            radius: 10
+                                            radius: metrics.gameCardRadius
                                         }
                                     }
                                 }
@@ -733,22 +1070,17 @@ FocusScope {
                                     id: fastBlur
                                     anchors.fill: parent
                                     source: boxfront
-                                    radius: selected ? 0 : 40
+                                    radius: selected
+                                    ? metrics.gameCardBlurRadiusActive
+                                    : metrics.gameCardBlurRadiusIdle
                                     opacity: selected ? 0 : 1
                                     visible: opacity > 0 && (!videoLoader.item || !videoLoader.item.videoOutput.visible)
 
                                     Behavior on radius {
-                                        NumberAnimation {
-                                            duration: 500
-                                            easing.type: Easing.InOutQuad
-                                        }
+                                        NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
                                     }
-
                                     Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 500
-                                            easing.type: Easing.InOutQuad
-                                        }
+                                        NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
                                     }
 
                                     layer.enabled: true
@@ -765,6 +1097,7 @@ FocusScope {
                                         id: videoLoader
                                         anchors.fill: parent
                                         active: delegateRoot.selected && gameGrid.activeFocus
+
                                         sourceComponent: Item {
                                             property alias mediaPlayer: mediaPlayer
                                             property alias videoOutput: videoOutput
@@ -772,7 +1105,7 @@ FocusScope {
                                             Rectangle {
                                                 id: videoMask
                                                 anchors.fill: parent
-                                                radius: 10
+                                                radius: metrics.gameCardRadius
                                                 visible: false
                                             }
 
@@ -792,12 +1125,9 @@ FocusScope {
                                                     }
                                                     if (status === MediaPlayer.EndOfMedia) {
                                                         videoOutput.visible = false;
-                                                        fastBlur.radius = 10;
+                                                        fastBlur.radius = metrics.gameCardBlurRadiusFinished;
                                                         fastBlur.opacity = 1;
                                                         logoOverlay.opacity = 1;
-                                                    }
-                                                    if (status === MediaPlayer.Error) {
-                                                        //console.log("Video error:", errorString);
                                                     }
                                                 }
                                             }
@@ -805,7 +1135,7 @@ FocusScope {
                                             VideoOutput {
                                                 id: videoOutput
                                                 anchors.fill: parent
-                                                anchors.margins: 1
+                                                anchors.margins: metrics.gameCardBorderWidth * 0.15
                                                 fillMode: VideoOutput.PreserveAspectCrop
                                                 visible: delegateRoot.selected && gameGrid.activeFocus
                                                 layer.enabled: true
@@ -813,7 +1143,7 @@ FocusScope {
                                                     maskSource: Rectangle {
                                                         width: backgroundRect.width
                                                         height: backgroundRect.height
-                                                        radius: 10
+                                                        radius: metrics.gameCardRadius
                                                     }
                                                 }
                                             }
@@ -824,35 +1154,38 @@ FocusScope {
                                 Image {
                                     id: logoOverlay
                                     anchors.centerIn: parent
-                                    source: game ? game.assets.logo : ""
-                                    width: parent.width * 0.7
-                                    height: parent.height * 0.7
+                                    source: (game && game.assets && game.assets.logo) ? game.assets.logo : ""
+                                    width: parent.width * metrics.gameCardLogoOverlayFraction
+                                    height: parent.height * metrics.gameCardLogoOverlayFraction
                                     opacity: selected ? 0 : 1
                                     fillMode: Image.PreserveAspectFit
                                     asynchronous: true
                                     mipmap: true
 
+                                    visible: source !== "" && status !== Image.Error
+
                                     Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 500
-                                            easing.type: Easing.InOutQuad
-                                        }
+                                        NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
                                     }
                                 }
 
                                 Rectangle {
                                     anchors.fill: parent
                                     color: "transparent"
-                                    visible: boxfront.status !== Image.Ready || (videoLoader.item && videoLoader.item.mediaPlayer.status !== MediaPlayer.Loaded)
+                                    visible: boxfront.status !== Image.Ready ||
+                                    (videoLoader.item &&
+                                    videoLoader.item.mediaPlayer.status !== MediaPlayer.Loaded)
 
                                     Image {
                                         id: loadingSpinner
                                         anchors.centerIn: parent
-                                        width: 50
-                                        height: 50
+                                        width: metrics.gameCardLoadingSpinnerSize
+                                        height: metrics.gameCardLoadingSpinnerSize
                                         source: "assets/icons/loading-spinner.svg"
                                         mipmap: true
-                                        visible: boxfront.status === Image.Loading || (videoLoader.item && videoLoader.item.mediaPlayer.status === MediaPlayer.Loading)
+                                        visible: boxfront.status === Image.Loading ||
+                                        (videoLoader.item &&
+                                        videoLoader.item.mediaPlayer.status === MediaPlayer.Loading)
 
                                         RotationAnimator on rotation {
                                             loops: Animator.Infinite
@@ -866,54 +1199,45 @@ FocusScope {
                                 Text {
                                     id: fallbackText
                                     anchors.centerIn: parent
+                                    width: parent.width * 0.85
+                                    height: parent.height * 0.75
                                     text: game ? game.title : ""
                                     color: "white"
-                                    font.pixelSize: parent.width * 0.08
+                                    font.pixelSize: parent.width * metrics.gameCardFallbackFontFraction
                                     font.bold: true
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
-                                    wrapMode: Text.Wrap
-                                    width: parent.width * 0.9
-                                    visible: {
-                                        var noScreenshot = !boxfront.source ||
-                                        boxfront.source === "" ||
-                                        boxfront.status === Image.Error ||
-                                        boxfront.status === Image.Null;
-                                        var noLogo = !logoOverlay.source ||
-                                        logoOverlay.source === "" ||
-                                        logoOverlay.status === Image.Error ||
-                                        logoOverlay.status === Image.Null;
-                                        return noScreenshot && noLogo;
-                                    }
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 4
+                                    elide: Text.ElideRight
+                                    fontSizeMode: Text.Fit
+                                    minimumPixelSize: Math.max(10, parent.width * 0.035)
+
+                                    visible: !logoOverlay.visible
                                 }
 
                                 Rectangle {
                                     id: playGameButton
                                     anchors.horizontalCenter: parent.horizontalCenter
                                     anchors.bottom: parent.bottom
-                                    anchors.bottomMargin: parent.height * 0.05
-                                    width: parent.width * 0.5
-                                    height: parent.height * 0.2
+                                    anchors.bottomMargin: parent.height * metrics.gameCardPlayButtonBottomMarginFraction
+                                    width: parent.width * metrics.gameCardPlayButtonWidthFraction
+                                    height: parent.height * metrics.gameCardButtonHeightFraction
+                                    radius: metrics.gameCardButtonRadius
                                     color: Qt.rgba(0, 0, 0, 0.6)
-                                    radius: 20
                                     opacity: delegateRoot.selected ? 1 : 0
                                     z: 1000
                                     visible: true
                                     scale: playGameMouseArea.pressed ? 0.95 : 1.0
 
-                                    Behavior on scale {
-                                        NumberAnimation { duration: 100 }
-                                    }
-
-                                    Behavior on color {
-                                        ColorAnimation { duration: 100 }
-                                    }
+                                    Behavior on scale { NumberAnimation { duration: 100 } }
+                                    Behavior on color { ColorAnimation { duration: 100 } }
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: "Play"
                                         color: "white"
-                                        font.pixelSize: parent.height * 0.4
+                                        font.pixelSize: parent.height * metrics.gameCardPlayButtonTextFraction
                                         font.bold: true
                                     }
 
@@ -935,26 +1259,14 @@ FocusScope {
                                                 }
                                             }
                                         }
-
-                                        onPressed: {
-                                            parent.color = Qt.rgba(0, 0, 0, 0.7);
-                                        }
-
+                                        onPressed: parent.color = Qt.rgba(0, 0, 0, 0.7)
                                         onReleased: {
-                                            if (!containsMouse) {
+                                            if (!containsMouse)
                                                 parent.color = Qt.rgba(0, 0, 0, 0.5);
-                                            }
                                         }
-
-                                        onEntered: {
-                                            parent.color = Qt.rgba(0, 0, 0, 0.6);
-                                        }
-
-                                        onExited: {
-                                            parent.color = Qt.rgba(0, 0, 0, 0.5);
-                                        }
+                                        onEntered: parent.color = Qt.rgba(0, 0, 0, 0.6)
+                                        onExited: parent.color = Qt.rgba(0, 0, 0, 0.5)
                                     }
-
 
                                     Timer {
                                         id: timer
@@ -963,6 +1275,7 @@ FocusScope {
                                         onTriggered: {
                                             if (gameToLaunch) {
                                                 api.memory.set('lastPlayedGame', gameToLaunch);
+                                                saveThemeState(gameToLaunch);
                                                 gameToLaunch.launch();
                                                 gameToLaunch = null;
                                             }
@@ -971,14 +1284,7 @@ FocusScope {
                                     }
 
                                     Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 600
-                                            easing.type: Easing.InOutQuad
-                                        }
-                                    }
-
-                                    onVisibleChanged: {
-                                        opacity = visible ? 1 : 0
+                                        NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
                                     }
                                 }
 
@@ -988,14 +1294,13 @@ FocusScope {
 
                                     anchors {
                                         right: playGameButton.left
-                                        rightMargin: parent.width * 0.02
+                                        rightMargin: parent.width * metrics.gameCardSideButtonMarginFraction
                                         verticalCenter: playGameButton.verticalCenter
                                     }
-
-                                    width: parent.width * 0.15
-                                    height: parent.height * 0.2
+                                    width: parent.width * metrics.gameCardSideButtonWidthFraction
+                                    height: parent.height * metrics.gameCardButtonHeightFraction
+                                    radius: metrics.gameCardButtonRadius
                                     color: Qt.rgba(0, 0, 0, 0.6)
-                                    radius: 20
                                     z: 1000
 
                                     opacity: {
@@ -1006,7 +1311,9 @@ FocusScope {
 
                                     Image {
                                         anchors.centerIn: parent
-                                        source: muteButton.isMuted ? "assets/icons/mute.png" : "assets/icons/volume.png"
+                                        source: muteButton.isMuted
+                                        ? "assets/icons/mute.png"
+                                        : "assets/icons/volume.png"
                                         width: parent.width * 0.7
                                         height: width
                                         mipmap: true
@@ -1021,24 +1328,19 @@ FocusScope {
                                             soundEffects.playOk();
                                             muteButton.isMuted = !muteButton.isMuted;
                                             api.memory.set('videoMuted', muteButton.isMuted);
-
-                                            if (videoLoader.item) {
+                                            if (videoLoader.item)
                                                 videoLoader.item.mediaPlayer.muted = muteButton.isMuted;
-                                            }
                                         }
-
                                         onPressed: parent.color = Qt.rgba(0, 0, 0, 0.7)
-                                        onReleased: parent.color = containsMouse ? Qt.rgba(0, 0, 0, 0.6) : Qt.rgba(0, 0, 0, 0.5)
+                                        onReleased: parent.color = containsMouse
+                                        ? Qt.rgba(0, 0, 0, 0.6)
+                                        : Qt.rgba(0, 0, 0, 0.5)
                                         onEntered: parent.color = Qt.rgba(0, 0, 0, 0.6)
                                         onExited: parent.color = Qt.rgba(0, 0, 0, 0.5)
                                     }
 
-
                                     Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 600
-                                            easing.type: Easing.InOutQuad
-                                        }
+                                        NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
                                     }
                                 }
 
@@ -1048,20 +1350,21 @@ FocusScope {
 
                                     anchors {
                                         left: playGameButton.right
-                                        leftMargin: parent.width * 0.02
+                                        leftMargin: parent.width * metrics.gameCardSideButtonMarginFraction
                                         verticalCenter: playGameButton.verticalCenter
                                     }
-
-                                    width: parent.width * 0.15
-                                    height: parent.height * 0.2
+                                    width: parent.width * metrics.gameCardSideButtonWidthFraction
+                                    height: parent.height * metrics.gameCardButtonHeightFraction
+                                    radius: metrics.gameCardButtonRadius
                                     color: Qt.rgba(0, 0, 0, 0.6)
-                                    radius: 20
                                     opacity: delegateRoot.selected ? 1 : 0
                                     z: 1000
 
                                     Image {
                                         anchors.centerIn: parent
-                                        source: favoriteButton.isFavorite ? "assets/icons/favorite-on.png" : "assets/icons/favorite-off.png"
+                                        source: favoriteButton.isFavorite
+                                        ? "assets/icons/favorite-on.svg"
+                                        : "assets/icons/favorite-off.svg"
                                         width: parent.width * 0.7
                                         height: width
                                         mipmap: true
@@ -1080,7 +1383,6 @@ FocusScope {
                                                     var originalGame = collection.games.get(i);
                                                     if (originalGame.title === currentgame.title) {
                                                         originalGame.favorite = !originalGame.favorite;
-
                                                         currentgame.favorite = originalGame.favorite;
                                                         favoriteButton.isFavorite = originalGame.favorite;
                                                         gameActionBar.availableFilters = GameFilters.getAvailableFilters(collection);
@@ -1092,27 +1394,25 @@ FocusScope {
 
                                                         proxyModel.invalidate();
 
-                                                        if (gameActionBar.currentFilter === "Favorites" && proxyModel.count === 0) {
+                                                        if (gameActionBar.currentFilter === "Favorites" &&
+                                                            proxyModel.count === 0) {
                                                             gameActionBar.currentFilter = "All Games";
-                                                        }
-
-                                                        break;
+                                                            }
+                                                            break;
                                                     }
                                                 }
                                             }
                                         }
-
                                         onPressed: parent.color = Qt.rgba(0, 0, 0, 0.7)
-                                        onReleased: parent.color = containsMouse ? Qt.rgba(0, 0, 0, 0.6) : Qt.rgba(0, 0, 0, 0.5)
+                                        onReleased: parent.color = containsMouse
+                                        ? Qt.rgba(0, 0, 0, 0.6)
+                                        : Qt.rgba(0, 0, 0, 0.5)
                                         onEntered: parent.color = Qt.rgba(0, 0, 0, 0.6)
                                         onExited: parent.color = Qt.rgba(0, 0, 0, 0.5)
                                     }
 
                                     Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 600
-                                            easing.type: Easing.InOutQuad
-                                        }
+                                        NumberAnimation { duration: 600; easing.type: Easing.InOutQuad }
                                     }
                                 }
 
@@ -1120,38 +1420,35 @@ FocusScope {
                                     id: playTimeIndicator
                                     property int playTimeSeconds: game ? game.playTime : 0
                                     property string formattedTime: Utils.formatPlayTime(playTimeSeconds)
-                                    property bool shouldShow: Utils.shouldShowPlayTime(playTimeSeconds) && delegateRoot.selected
+                                    property bool shouldShow: Utils.shouldShowPlayTime(playTimeSeconds) &&
+                                    delegateRoot.selected
 
                                     anchors {
                                         top: parent.top
                                         right: parent.right
-                                        topMargin: parent.height * 0.05
-                                        rightMargin: parent.width * 0.03
+                                        topMargin: parent.height * metrics.gameCardPlayTimeTopMarginFraction
+                                        rightMargin: parent.width * metrics.gameCardPlayTimeRightMarginFraction
                                     }
-
-                                    width: parent.width * 0.35
-                                    height: parent.height * 0.15
+                                    width: parent.width * metrics.gameCardPlayTimeWidthFraction
+                                    height: parent.height * metrics.gameCardPlayTimeHeightFraction
+                                    radius: height * metrics.gameCardPlayTimeRadiusFactor
                                     color: Qt.rgba(0, 0, 0, 0.6)
-                                    radius: height * 0.2
                                     opacity: shouldShow ? 1 : 0
                                     visible: shouldShow
                                     z: 1000
 
                                     Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: 300
-                                            easing.type: Easing.InOutQuad
-                                        }
+                                        NumberAnimation { duration: 300; easing.type: Easing.InOutQuad }
                                     }
 
                                     Row {
                                         anchors.centerIn: parent
-                                        spacing: parent.width * 0.03
+                                        spacing: parent.width * metrics.gameCardPlayTimeRowSpacingFraction
 
                                         Image {
                                             id: playTimeIcon
                                             source: "assets/icons/playtime.svg"
-                                            width: parent.parent.height * 0.7
+                                            width: parent.parent.height * metrics.gameCardPlayTimeIconSizeFactor
                                             height: width
                                             sourceSize { width: 64; height: 64 }
                                             fillMode: Image.PreserveAspectFit
@@ -1163,7 +1460,7 @@ FocusScope {
                                             id: playTimeText
                                             text: playTimeIndicator.formattedTime
                                             color: "white"
-                                            font.pixelSize: parent.parent.height * 0.5
+                                            font.pixelSize: parent.parent.height * metrics.gameCardPlayTimeFontSizeFactor
                                             font.bold: true
                                             horizontalAlignment: Text.AlignHCenter
                                             verticalAlignment: Text.AlignVCenter
@@ -1186,9 +1483,9 @@ FocusScope {
                         id: selectionBorder
                         anchors.fill: parent
                         color: "transparent"
-                        border.width: selected ? 6 : 0
+                        border.width: selected ? metrics.gameCardBorderWidth : 0
                         border.color: myColorMapping.getColor(root.currentShortName)
-                        radius: 9
+                        radius: metrics.gameCardRadius - 1
                         z: 1001
                         visible: selected
 
@@ -1204,7 +1501,6 @@ FocusScope {
                                 duration: 600
                                 easing.type: Easing.InOutQuad
                             }
-
                             PropertyAnimation {
                                 target: selectionBorder
                                 property: "border.color"
@@ -1217,11 +1513,25 @@ FocusScope {
                     }
                 }
 
-                onCurrentIndexChanged: {
+                signal selectionCommitted()
+                property bool navFastScrolling: false
+
+                Timer {
+                    id: gridSettleTimer
+                    interval: 120
+                    repeat: false
+                    onTriggered: gameGrid.commitSelection()
+                }
+
+                function commitSelection() {
+                    gridSettleTimer.stop();
+                    navFastScrolling = false;
+
                     var selectedGame = gameGrid.model.get(gameGrid.currentIndex);
 
                     if (selectedGame) {
-                        var imageSource = selectedGame.assets.background || selectedGame.assets.screenshot || "";
+                        var imageSource = selectedGame.assets.background ||
+                        selectedGame.assets.screenshot || "";
                         screenshotsContainer.setScreenshot(imageSource);
 
                         var collection = api.collections.get(collectionsListView.currentIndex);
@@ -1236,12 +1546,9 @@ FocusScope {
                         currentgame = selectedGame;
 
                         if (gameActionBar.favoriteButton) {
-                            gameActionBar.favoriteButton.buttonText = currentgame.favorite ? "Favorite -" : "Favorite +";
+                            gameActionBar.favoriteButton.buttonText =
+                            currentgame.favorite ? "Favorite -" : "Favorite +";
                         }
-
-                        /*console.log("Juego cambiado a:", selectedGame.title,
-                                    "Favorite:", selectedGame.favorite,
-                                    "Filtro actual:", gameActionBar.currentFilter);*/
                     } else {
                         currentgame = null;
                     }
@@ -1250,35 +1557,44 @@ FocusScope {
                         var currentCollection = api.collections.get(collectionsListView.currentIndex);
                         gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollection);
                     }
+
+                    selectionCommitted();
+                }
+
+                onCurrentIndexChanged: {
+                    if (navFastScrolling) {
+                        gridSettleTimer.restart();
+                    } else {
+                        commitSelection();
+                    }
                 }
 
                 focus: gamesGridFocused
 
                 Keys.onLeftPressed: {
+                    navFastScrolling = event.isAutoRepeat;
                     if (currentIndex > 0) {
                         currentIndex--;
-                        soundEffects.playLeft()
+                        soundEffects.playLeft();
                     }
-
-                    if (screensaver.screensaverActive) {
+                    if (screensaver.screensaverActive)
                         screensaver.stopScreensaver();
-                    }
                     screensaver.resetInactivityTimer();
                 }
 
                 Keys.onRightPressed: {
+                    navFastScrolling = event.isAutoRepeat;
                     if (currentIndex < count - 1) {
                         currentIndex++;
-                        soundEffects.playRight()
+                        soundEffects.playRight();
                     }
-
-                    if (screensaver.screensaverActive) {
+                    if (screensaver.screensaverActive)
                         screensaver.stopScreensaver();
-                    }
                     screensaver.resetInactivityTimer();
                 }
 
                 Keys.onUpPressed: {
+                    navFastScrolling = event.isAutoRepeat;
                     var newIndex = currentIndex - gameGrid.columns;
                     if (newIndex >= 0) {
                         currentIndex = newIndex;
@@ -1286,13 +1602,13 @@ FocusScope {
                     } else {
                         soundEffects.playStop();
                     }
-                    if (screensaver.screensaverActive) {
+                    if (screensaver.screensaverActive)
                         screensaver.stopScreensaver();
-                    }
                     screensaver.resetInactivityTimer();
                 }
 
                 Keys.onDownPressed: {
+                    navFastScrolling = event.isAutoRepeat;
                     var newIndex = currentIndex + gameGrid.columns;
                     if (newIndex < count) {
                         currentIndex = newIndex;
@@ -1300,10 +1616,17 @@ FocusScope {
                     } else {
                         soundEffects.playStop();
                     }
-                    if (screensaver.screensaverActive) {
+                    if (screensaver.screensaverActive)
                         screensaver.stopScreensaver();
-                    }
                     screensaver.resetInactivityTimer();
+                }
+
+                Keys.onReleased: {
+                    if (!event.isAutoRepeat &&
+                        (event.key === Qt.Key_Left || event.key === Qt.Key_Right ||
+                         event.key === Qt.Key_Up || event.key === Qt.Key_Down)) {
+                        gameGrid.commitSelection();
+                    }
                 }
 
                 Keys.onPressed: {
@@ -1316,11 +1639,9 @@ FocusScope {
                             gamesGridFocused = false;
                             soundEffects.playBack();
 
-                            if (screensaver.screensaverActive) {
+                            if (screensaver.screensaverActive)
                                 screensaver.stopScreensaver();
-                            }
-                        }
-                        else if (api.keys.isAccept(event)) {
+                        } else if (api.keys.isAccept(event)) {
                             event.accepted = true;
                             var sourceIndex = proxyModel.mapToSource(gameGrid.currentIndex);
                             var sourceModel = api.collections.get(collectionsListView.currentIndex).games;
@@ -1328,11 +1649,11 @@ FocusScope {
                                 var gameToLaunch = sourceModel.get(sourceIndex);
                                 if (gameToLaunch) {
                                     api.memory.set('lastPlayedGame', gameToLaunch);
+                                    saveThemeState(gameToLaunch);
                                     gameToLaunch.launch();
                                 }
                             }
-                        }
-                        else if (api.keys.isFilters(event)) {
+                        } else if (api.keys.isFilters(event)) {
                             event.accepted = true;
                             gameActionBar.currentFilter = GameFilters.getNextFilter(
                                 gameActionBar.currentFilter,
@@ -1348,8 +1669,7 @@ FocusScope {
                             }
 
                             gameActionBar.filterButton.buttonText = gameActionBar.currentFilter;
-                        }
-                        else if (api.keys.isDetails(event)) {
+                        } else if (api.keys.isDetails(event)) {
                             event.accepted = true;
                             soundEffects.playFav();
 
@@ -1359,20 +1679,25 @@ FocusScope {
                                     var originalGame = collection.games.get(i);
                                     if (originalGame.title === currentgame.title) {
                                         originalGame.favorite = !originalGame.favorite;
-                                        console.log("Favorito actualizado (tecla Details):",
-                                                    originalGame.title, originalGame.favorite);
-                                        currentgame.favorite = originalGame.favorite;
+
+                                        if (root.debugLogsEnabled)
+                                            console.log("Favorito actualizado (tecla Details):",
+                                                        originalGame.title, originalGame.favorite);
+
+                                            currentgame.favorite = originalGame.favorite;
                                         gameActionBar.availableFilters = GameFilters.getAvailableFilters(collection);
 
                                         if (gameActionBar.favoriteButton) {
-                                            gameActionBar.favoriteButton.buttonText = currentgame.favorite ? "Favorite -" : "Favorite +";
-                                        }
-                                        proxyModel.invalidate();
-                                        if (gameActionBar.currentFilter === "Favorites" && proxyModel.count === 0) {
-                                            gameActionBar.currentFilter = "All Games";
+                                            gameActionBar.favoriteButton.buttonText =
+                                            currentgame.favorite ? "Favorite -" : "Favorite +";
                                         }
 
-                                        break;
+                                        proxyModel.invalidate();
+                                        if (gameActionBar.currentFilter === "Favorites" &&
+                                            proxyModel.count === 0) {
+                                            gameActionBar.currentFilter = "All Games";
+                                            }
+                                            break;
                                     }
                                 }
                             }
@@ -1387,15 +1712,15 @@ FocusScope {
 
                 anchors {
                     right: parent.right
-                    rightMargin: parent.width * 0.02
+                    rightMargin: parent.width * metrics.gameGridProgressBarRightMarginFraction
                     verticalCenter: gameGrid.verticalCenter
                 }
 
-                width: 6
-                height: gameGrid.height * 0.8
+                width: metrics.gameGridProgressBarWidth
+                height: gameGrid.height * metrics.gameGridProgressBarHeightFraction
                 color: Qt.rgba(1, 1, 1, 0.2)
-                radius: 3
-                visible: gameGrid.count > 8
+                radius: metrics.gameGridProgressBarRadius
+                visible: gameGrid.count > metrics.gameGridPageSize
 
                 Rectangle {
                     id: progressIndicator
@@ -1404,7 +1729,8 @@ FocusScope {
                     anchors.top: parent.top
 
                     height: {
-                        if (gameGrid.count <= 8) return parent.height;
+                        if (gameGrid.count <= metrics.gameGridPageSize)
+                            return parent.height;
 
                         var progress = (gameGrid.currentIndex + 1) / gameGrid.count;
                         var minHeight = parent.height * 0.1;
@@ -1414,15 +1740,11 @@ FocusScope {
                     }
 
                     color: myColorMapping.getColor(root.currentShortName)
-                    radius: 3
+                    radius: metrics.gameGridProgressBarRadius
 
                     Behavior on height {
-                        NumberAnimation {
-                            duration: 300
-                            easing.type: Easing.OutCubic
-                        }
+                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
                     }
-
                     Behavior on color {
                         ColorAnimation { duration: 300 }
                     }
@@ -1435,7 +1757,7 @@ FocusScope {
                         GradientStop { position: 0.5; color: "transparent" }
                         GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.2) }
                     }
-                    radius: 3
+                    radius: metrics.gameGridProgressBarRadius
                 }
             }
         }
@@ -1443,11 +1765,12 @@ FocusScope {
         CollectionInfo {
             id: collectionInfo
             anchors.top: collectionsListView.bottom
-            anchors.topMargin: parent.height * 0.05
+            anchors.topMargin: metrics.collectionInfoAnchorMargin
             visible: mainMenuVisible
             currentShortName: root.currentShortName
             collectionSystemInfo: root.collectionSystemInfo
             collectionDescription: root.collectionDescription
+            metrics: metrics
         }
 
         ActionBar {
@@ -1455,15 +1778,16 @@ FocusScope {
 
             anchors {
                 top: parent.top
-                topMargin: parent.height * 0.43
+                topMargin: metrics.actionBarTopMargin
                 right: parent.right
-                rightMargin: parent.width * 0.03
+                rightMargin: metrics.actionBarRightMargin
             }
-            width: parent.width * 0.45
-            height: parent.height * 0.07
+            width: metrics.actionBarWidth
+            height: metrics.actionBarHeight
             visible: gamesGridVisible
             opacity: themeContainerOpacity
             rootReference: root
+            metrics: metrics
 
             onFavoriteClicked: {
                 if (currentgame) {
@@ -1472,9 +1796,7 @@ FocusScope {
                         var originalGame = collection.games.get(i);
                         if (originalGame.title === currentgame.title) {
                             originalGame.favorite = !originalGame.favorite;
-                            //console.log("Favorito actualizado:", originalGame.title, originalGame.favorite);
                             gameActionBar.availableFilters = GameFilters.getAvailableFilters(collection);
-                            //console.log("Filtros disponibles actualizados:", gameActionBar.availableFilters);
                             break;
                         }
                     }
@@ -1491,7 +1813,6 @@ FocusScope {
                         }
 
                         if (!hasFavorites) {
-                            //console.log("No hay más favoritos, cambiando a All Games");
                             currentFilter = "All Games";
                             Qt.callLater(function() {
                                 proxyModel.invalidate();
@@ -1538,6 +1859,7 @@ FocusScope {
                         var sourceGame = sourceModel.get(i);
                         if (sourceGame && sourceGame.title === currentgame.title) {
                             api.memory.set('lastPlayedGame', sourceGame);
+                            saveThemeState(sourceGame);
                             sourceGame.launch();
                             break;
                         }
@@ -1546,11 +1868,11 @@ FocusScope {
             }
 
             onBackClicked: {
-                mainMenuVisible = true
-                mainMenuFocused = true
-                gamesGridVisible = false
-                gamesGridFocused = false
-                soundEffects.playBack()
+                mainMenuVisible = true;
+                mainMenuFocused = true;
+                gamesGridVisible = false;
+                gamesGridFocused = false;
+                soundEffects.playBack();
             }
 
             Behavior on opacity {
@@ -1564,10 +1886,11 @@ FocusScope {
         themeContainerOpacity: root.themeContainerOpacity
         gamesGridVisible: root.gamesGridVisible
         currentShortName: root.currentShortName
+        metrics: metrics
 
         anchors {
             top: parent.top
-            topMargin: 20
+            topMargin: metrics.topBarMargin
         }
     }
 
@@ -1576,12 +1899,13 @@ FocusScope {
         currentgame: root.currentgame
         visible: gamesGridVisible
         opacity: themeContainerOpacity
+        metrics: metrics
 
         anchors {
             top: parent.top
             left: parent.left
-            leftMargin: parent ? parent.width * 0.03 : 0
-            topMargin: parent ? parent.height * 0.03 : 0
+            leftMargin: metrics.gameInfoViewLeftMargin
+            topMargin: metrics.gameInfoViewTopMargin
         }
 
         Behavior on opacity {
@@ -1594,23 +1918,28 @@ FocusScope {
         themeContainerOpacity: root.themeContainerOpacity
         currentShortName: root.currentShortName
         visibleState: gamesGridVisible && gamesGridFocused
+        metrics: metrics
 
         anchors {
             top: topBar.bottom
             right: parent.right
-            topMargin: 10
-            rightMargin: parent.width * 0.03
+            topMargin: metrics.logoContainerTopMargin
+            rightMargin: metrics.logoContainerRightMargin
         }
     }
 
-    function loadCollectionMetadata() {
-        var systemData = myGameSystems.getSystemMetadata(currentShortName) || {};
-        var currentCollection = api.collections.get(collectionsListView.currentIndex);
-        var gameCount = currentCollection.games.count || 0;
-        gameActionBar.availableFilters = GameFilters.getAvailableFilters(currentCollection);
-        collectionSystemInfo = "┌CONSOLE: " + (systemData.systemName || "None") + "┐┌" +
-        "YEAR: " + (systemData.releaseYear || "None") + "┐┌" +
-        "GAMES: " + gameCount + "┐";
-        collectionDescription = systemData.description || "No description available";
+    UpdateNotification {
+        id: updateNotification
+        metrics: metrics
+        soundEffects: soundEffects
+        accentColor: root.currentColor
+
+        onClosed: {
+            if (gamesGridVisible) {
+                gameGrid.forceActiveFocus();
+            } else {
+                collectionsListView.forceActiveFocus();
+            }
+        }
     }
 }

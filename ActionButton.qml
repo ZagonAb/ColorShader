@@ -8,11 +8,17 @@ Rectangle {
     property real iconSizeRatio: 0.6
     property real textSizeRatio: 0.45
     property Item rootReference: null
+    property var metrics: null
+    property bool compact: false
 
     signal clicked()
 
-    width: rootReference ? rootReference.width * 0.1 : 120
-    height: rootReference ? rootReference.height * 0.06 : 60
+    width: compact
+    ? (metrics ? metrics.actionButtonDiameterCompact : 60)
+    : (metrics ? metrics.actionButtonWidth : (rootReference ? rootReference.width * 0.1 : 120))
+    height: compact
+    ? width
+    : (metrics ? metrics.actionButtonHeight : (rootReference ? rootReference.height * 0.06 : 60))
 
     property real padding: height * 0.2
 
@@ -29,16 +35,20 @@ Rectangle {
     Row {
         id: contentRow
         anchors.centerIn: parent
-        spacing: actionButton.height * 0.15
-        width: Math.min(implicitWidth, actionButton.width - actionButton.padding * 2)
-        height: actionButton.height * 0.7
+        spacing: actionButton.compact ? 0 : actionButton.height * 0.15
+        width: actionButton.compact
+        ? Math.round(actionButton.height * 0.55)
+        : Math.min(implicitWidth, actionButton.width - actionButton.padding * 2)
+        height: actionButton.compact
+        ? Math.round(actionButton.height * 0.55)
+        : actionButton.height * 0.7
         clip: true
 
         Image {
             id: icon
             source: iconSource
-            width: height
-            height: parent.height * iconSizeRatio
+            width: actionButton.compact ? parent.height : height
+            height: actionButton.compact ? parent.height : parent.height * iconSizeRatio
             anchors.verticalCenter: parent.verticalCenter
             fillMode: Image.PreserveAspectFit
             mipmap: true
@@ -46,7 +56,7 @@ Rectangle {
             opacity: mouseArea.containsMouse ? 1.0 : 0.8
 
             Component.onCompleted: {
-                if (height < 12) height = 12
+                if (!actionButton.compact && height < 12) height = 12
             }
 
             onStatusChanged: {
@@ -60,6 +70,7 @@ Rectangle {
 
         Text {
             id: textElement
+            visible: !actionButton.compact
             text: buttonText
             color: "white"
             font {

@@ -5,47 +5,41 @@ import "qrc:/qmlutils" as PegasusUtils
 
 Item {
     id: gameInfoViewRoot
-    width: parent.width * 0.50
-    height: parent.height * 0.50
+    width: metrics ? metrics.gameInfoViewWidth : parent.width * 0.50
+    height: metrics ? metrics.gameInfoViewHeight : parent.height * 0.50
     visible: parent ? parent.gamesGridVisible : false
     property var currentgame: null
+    property var metrics: null
 
     onCurrentgameChanged: {
-        gameLogo.source = "";
         if (currentgame && currentgame.assets && currentgame.assets.logo) {
             gameLogo.source = currentgame.assets.logo;
         } else {
-            gameLogo.source = "assets/logos/default.png";
+            gameLogo.source = "";
         }
     }
 
     Column {
         anchors.fill: parent
-        anchors.leftMargin: parent ? parent.width * 0.020 : 0
-        anchors.topMargin: parent ? parent.height * 0.010 : 0
-        spacing: 20
-
+        anchors.leftMargin: metrics ? metrics.gameInfoViewColumnLeftMargin : (parent ? parent.width * 0.020 : 0)
+        anchors.topMargin: metrics ? metrics.gameInfoViewColumnTopMargin : (parent ? parent.height * 0.010 : 0)
+        spacing: metrics ? metrics.gameInfoViewColumnSpacing : 20
 
         Item {
-            width: parent.width * 0.42
-            height: parent.height * 0.32
+            width: metrics ? metrics.gameInfoViewLogoWidth : parent.width * 0.42
+            height: metrics ? metrics.gameInfoViewLogoHeight : parent.height * 0.32
 
             Image {
                 id: gameLogo
                 anchors.fill: parent
-                source: currentgame ? currentgame.assets.logo : "assets/logos/default.png"
+                source: (currentgame && currentgame.assets && currentgame.assets.logo)
+                ? currentgame.assets.logo
+                : ""
                 fillMode: Image.PreserveAspectFit
                 mipmap: true
-                visible: status !== Image.Error
-            }
-
-            Image {
-                id: fallbackImage
-                anchors.fill: parent
-                source: "assets/logos/default.png"
-                fillMode: Image.PreserveAspectFit
-                mipmap: true
-                visible: gameLogo.status === Image.Error && status !== Image.Error
+                visible: source !== ""
+                && status !== Image.Error
+                && status !== Image.Null
             }
 
             Text {
@@ -61,14 +55,16 @@ Item {
                 text: currentgame ? currentgame.title : ""
                 color: "white"
                 font.family: "Black Han Sans"
-                font.pixelSize: Math.min(parent.height * 0.32, parent.width * 0.24)
+                font.pixelSize: metrics.topBarClockFontSize
                 font.bold: false
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.Wrap
                 minimumPixelSize: 12
                 fontSizeMode: Text.Fit
-                visible: gameLogo.status === Image.Error && fallbackImage.status === Image.Error
+
+                visible: !gameLogo.visible
+
                 layer.enabled: true
                 layer.effect: DropShadow {
                     color: "black"
@@ -90,65 +86,69 @@ Item {
         }
 
         Row {
-            spacing: parent.width * 0.01
-            height: parent.height * 0.06
-            width: parent.width * 0.8
+            spacing: metrics ? metrics.gameInfoViewPillRowSpacing : parent.width * 0.01
+            height: metrics ? metrics.gameInfoViewPillRowHeight : parent.height * 0.06
+            width: metrics ? metrics.gameInfoViewPillRowWidth : parent.width * 0.8
 
             Rectangle {
                 id: text_developer
-                width: developer_text.contentWidth + 30
-                height: parent.height + 10
+                width: developer_text.contentWidth + (metrics ? metrics.gameInfoViewPillPaddingH : 30)
+                height: parent.height + (metrics ? metrics.gameInfoViewPillPaddingV : 10)
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
-                border.width: 2
-                radius: 5
+                border.width: metrics ? metrics.gameInfoViewPillBorderWidth : 2
+                radius: metrics ? metrics.gameInfoViewPillRadius : 5
 
                 Text {
                     id: developer_text
                     text: currentgame ? Utils.formatGameDeveloper(currentgame.developer) : ""
                     color: "white"
                     font.bold: true
-                    font.pixelSize: parent.height * 0.45
+                    font.pixelSize: metrics ? metrics.gameInfoViewPillFontSize : parent.height * 0.45
                     anchors.centerIn: parent
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
+                    elide: (metrics && !metrics.isWide) ? Text.ElideNone : Text.ElideRight
                     maximumLineCount: 1
                 }
             }
 
             Rectangle {
-                width: releaseyear_text.contentWidth + 30
-                height: parent.height + 10
+                width: releaseyear_text.contentWidth + (metrics ? metrics.gameInfoViewPillPaddingH : 30)
+                height: parent.height + (metrics ? metrics.gameInfoViewPillPaddingV : 10)
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
-                border.width: 2
-                radius: 5
+                border.width: metrics ? metrics.gameInfoViewPillBorderWidth : 2
+                radius: metrics ? metrics.gameInfoViewPillRadius : 5
 
                 Text {
                     id: releaseyear_text
                     text: currentgame ? Utils.getReleaseYearText(currentgame.releaseYear) : ""
                     color: "white"
                     font.bold: true
-                    font.pixelSize: parent.height * 0.45
+                    font.pixelSize: metrics ? metrics.gameInfoViewPillFontSize : parent.height * 0.45
                     anchors.centerIn: parent
                 }
             }
 
             Rectangle {
-                width: Math.min(genre_text.implicitWidth + 30, parent.width * 0.3)
-                height: parent.height + 10
+                width: {
+                    var base = genre_text.implicitWidth + (metrics ? metrics.gameInfoViewPillPaddingH : 30);
+                    if (metrics && !metrics.isWide) return base;
+                    return Math.min(base, parent.width * 0.3);
+                }
+                height: parent.height + (metrics ? metrics.gameInfoViewPillPaddingV : 10)
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
-                border.width: 2
-                radius: 5
+                border.width: metrics ? metrics.gameInfoViewPillBorderWidth : 2
+                radius: metrics ? metrics.gameInfoViewPillRadius : 5
 
                 Text {
                     id: genre_text
                     text: currentgame ? Utils.formatGameGenre(currentgame.genre) : ""
                     color: "white"
                     font.bold: true
-                    font.pixelSize: parent.height * 0.45
+                    font.pixelSize: metrics ? metrics.gameInfoViewPillFontSize : parent.height * 0.45
                     anchors {
                         verticalCenter: parent.verticalCenter
                         left: parent.left
@@ -157,19 +157,19 @@ Item {
                     }
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
+                    elide: (metrics && !metrics.isWide) ? Text.ElideNone : Text.ElideRight
                     maximumLineCount: 1
                 }
             }
 
             Rectangle {
                 id: ratingContainer
-                width: rating_content.width + 30
-                height: parent.height + 10
+                width: rating_content.width + (metrics ? metrics.gameInfoViewPillPaddingH : 30)
+                height: parent.height + (metrics ? metrics.gameInfoViewPillPaddingV : 10)
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
-                border.width: 2
-                radius: 5
+                border.width: metrics ? metrics.gameInfoViewPillBorderWidth : 2
+                radius: metrics ? metrics.gameInfoViewPillRadius : 5
 
                 Row {
                     id: rating_content
@@ -178,44 +178,59 @@ Item {
                     height: parent.height * 0.8
 
                     Repeater {
-                        model: currentgame ? Utils.displayRating(currentgame.rating).split(" ").length : 0
+                        model: (metrics && metrics.isWide && currentgame)
+                        ? Utils.displayRating(currentgame.rating).split(" ").length
+                        : 0
                         Image {
-                            source: currentgame ? Utils.displayRating(currentgame.rating).split(" ")[index] : ""
+                            source: currentgame
+                            ? Utils.displayRating(currentgame.rating).split(" ")[index]
+                            : ""
                             width: parent.height * 0.8
                             height: width
                             mipmap: true
                             anchors.verticalCenter: parent.verticalCenter
                         }
                     }
+
+                    Text {
+                        visible: metrics && !metrics.isWide
+                        text: currentgame ? Math.round((currentgame.rating || 0) * 100) + "%" : ""
+                        color: "white"
+                        font.bold: true
+                        font.pixelSize: metrics ? metrics.gameInfoViewPillFontSize : parent.parent.height * 0.45
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
                 }
             }
 
             Rectangle {
-                width: lastPlayedText.contentWidth + 30
-                height: parent.height + 10
+                width: lastPlayedText.contentWidth + (metrics ? metrics.gameInfoViewPillPaddingH : 30)
+                height: parent.height + (metrics ? metrics.gameInfoViewPillPaddingV : 10)
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
-                border.width: 2
-                radius: 5
-                visible: currentgame ? currentgame.lastPlayed && currentgame.lastPlayed.getTime() > 0 : false
+                border.width: metrics ? metrics.gameInfoViewPillBorderWidth : 2
+                radius: metrics ? metrics.gameInfoViewPillRadius : 5
+                visible: currentgame ? (currentgame.lastPlayed && currentgame.lastPlayed.getTime() > 0) : false
 
                 Text {
                     id: lastPlayedText
                     text: currentgame ? Utils.formatLastPlayedDate(currentgame.lastPlayed) : ""
                     color: "white"
                     font.bold: true
-                    font.pixelSize: parent.height * 0.45
+                    font.pixelSize: metrics ? metrics.gameInfoViewPillFontSize : parent.height * 0.45
                     anchors.centerIn: parent
                 }
             }
 
             Rectangle {
-                width: players_content.width + (showEllipsisItem.visible ? showEllipsisItem.width : 0) + 30
-                height: parent.height + 10
+                width: players_content.width +
+                (showEllipsisItem.visible ? showEllipsisItem.width : 0) +
+                (metrics ? metrics.gameInfoViewPillPaddingH : 30)
+                height: parent.height + (metrics ? metrics.gameInfoViewPillPaddingV : 10)
                 color: Qt.rgba(0, 0, 0, 0.5)
                 border.color: "white"
-                border.width: 2
-                radius: 5
+                border.width: metrics ? metrics.gameInfoViewPillBorderWidth : 2
+                radius: metrics ? metrics.gameInfoViewPillRadius : 5
                 visible: currentgame ? currentgame.players > 1 : false
 
                 Row {
@@ -226,8 +241,9 @@ Item {
 
                     Repeater {
                         model: {
-                            var playersContent = currentgame ? Utils.getPlayersContent(currentgame.players) : null;
-                            return playersContent ? playersContent.count : 0;
+                            if (!(metrics && metrics.isWide)) return 0;
+                            var pc = currentgame ? Utils.getPlayersContent(currentgame.players) : null;
+                            return pc ? pc.count : 0;
                         }
 
                         Item {
@@ -236,8 +252,8 @@ Item {
 
                             Image {
                                 source: {
-                                    var playersContent = currentgame ? Utils.getPlayersContent(currentgame.players) : null;
-                                    return playersContent ? playersContent.source : "";
+                                    var pc = currentgame ? Utils.getPlayersContent(currentgame.players) : null;
+                                    return pc ? pc.source : "";
                                 }
                                 width: parent.width
                                 height: width
@@ -248,13 +264,23 @@ Item {
                         }
                     }
 
+                    Text {
+                        visible: metrics && !metrics.isWide
+                        text: (currentgame && currentgame.players > 1) ? currentgame.players + "P" : ""
+                        color: "white"
+                        font.bold: true
+                        font.pixelSize: metrics ? metrics.gameInfoViewPillFontSize : parent.parent.height * 0.45
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
                     Item {
                         id: showEllipsisItem
                         width: ellipsisText.implicitWidth
                         height: parent.height
                         visible: {
-                            var playersContent = currentgame ? Utils.getPlayersContent(currentgame.players) : null;
-                            return playersContent ? playersContent.showEllipsis : false;
+                            if (!(metrics && metrics.isWide)) return false;
+                            var pc = currentgame ? Utils.getPlayersContent(currentgame.players) : null;
+                            return pc ? pc.showEllipsis : false;
                         }
 
                         Text {
@@ -276,8 +302,9 @@ Item {
                 left: parent.left
                 right: parent.right
             }
-            height: parent.height * 0.43
+            height: metrics ? metrics.gameInfoViewScrollHeight : parent.height * 0.43
             clip: true
+
             Rectangle {
                 id: fadeContainer
                 anchors.fill: parent
@@ -314,6 +341,7 @@ Item {
                         }
                     }
                 }
+
                 PegasusUtils.AutoScroll {
                     id: autoscroll
                     anchors.fill: parent
@@ -326,7 +354,6 @@ Item {
 
                         property real topPadding: autoscroll.height * 0.03
                         property real bottomPadding: autoscroll.height * 0.03
-                        property real sidePadding: autoscroll.width * 0.05
 
                         Item {
                             id: topSpacer
@@ -342,10 +369,10 @@ Item {
                                 leftMargin: parent.width * 0.01
                             }
                             text: currentgame ? Utils.formatGameDescription(currentgame.description) : ""
-                            width: parent.width - (parent.sidePadding * 2)
+                            width: parent.width * (metrics ? metrics.gameInfoViewDescriptionWidthFactor : 0.90)
                             lineHeight: 1.2
                             wrapMode: Text.Wrap
-                            font.pixelSize: autoscroll.width * 0.027
+                            font.pixelSize: metrics ? metrics.gameInfoViewDescriptionFontSize : autoscroll.width * 0.027
                             color: "white"
                             layer.enabled: true
                             layer.effect: DropShadow {

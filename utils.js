@@ -20,7 +20,7 @@ function formatGameDescription(description) {
 
 function formatGameDeveloper(developer) {
     if (!developer || developer.trim() === "") {
-        return "Unknown developer";
+        return "Unknown";
     }
     return developer;
 }
@@ -42,14 +42,14 @@ function getPlayersContent(players) {
 
 function getReleaseYearText(year) {
     if (year === 0 || !year) {
-        return "Unknown release year";
+        return "Unknown";
     }
     return year.toString();
 }
 
 function formatGameGenre(genre) {
     if (!genre || genre.trim() === "") {
-        return "Unknown genre";
+        return "Unknown";
     }
 
     const firstGenre = genre.split(/[\/,\-]/)[0].trim();
@@ -174,4 +174,57 @@ function formatPlayTime(playTimeSeconds) {
 
 function shouldShowPlayTime(playTimeSeconds) {
     return playTimeSeconds && playTimeSeconds >= 60;
+}
+
+function getRandomGames(collections) {
+    var games = [];
+    for (var i = 0; i < collections.count; i++) {
+        var gamesList = collections.get(i).games;
+        for (var j = 0; j < gamesList.count; j++) {
+            var game = gamesList.get(j);
+            if (game.assets && (game.assets.background || game.assets.screenshot)) {
+                games.push(game);
+            }
+        }
+    }
+    return games.sort(function() { return Math.random() - 0.5; });
+}
+
+function pad2(n) {
+    return (n < 10 ? "0" : "") + n;
+}
+
+function formatPlayTimeLong(seconds) {
+    if (!seconds || seconds < 0) return "00:00:00";
+    if (seconds < 60) {
+        var h = Math.floor(seconds / 3600);
+        var m = Math.floor((seconds % 3600) / 60);
+        var s = Math.floor(seconds % 60);
+        return pad2(h) + ":" + pad2(m) + ":" + pad2(s);
+    }
+    if (seconds < 3600) {
+        var m = Math.floor(seconds / 60);
+        return m + (m === 1 ? " minute" : " minutes");
+    }
+    var hours = seconds / 3600;
+    var rounded = hours.toFixed(1);
+    if (rounded.slice(-2) === ".0") rounded = rounded.slice(0, -2);
+    return rounded + (rounded === "1" ? " hour" : " hours");
+}
+
+function formatLastPlayedShort(date) {
+    if (!date || isNaN(date.getTime()) || date.getTime() === 0) return "Never";
+    var d = date.getDate();
+    var m = date.getMonth() + 1;
+    var y = date.getFullYear() % 100;
+    return d + "/" + m + "/" + y;
+}
+
+function getRatingStars(rating) {
+    var r = Math.round((rating || 0) * 5);
+    var s = "";
+    for (var i = 0; i < 5; i++) {
+        s += (i < r) ? "★" : "☆";
+    }
+    return s;
 }

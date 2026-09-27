@@ -54,6 +54,12 @@ Item {
         volume: 1.0 * effectsVolume
     }
 
+    SoundEffect {
+        id: noticeSound
+        source: "assets/sound/notice.wav"
+        volume: 1.0 * effectsVolume
+    }
+
     function playOk() { okSound.play(); }
     function playRight() { rightSound.play(); }
     function playLeft() { leftSound.play(); }
@@ -62,4 +68,5 @@ Item {
     function playUp() { upSound.play(); }
     function playDown() { downSound.play(); }
     function playStop() { stopSound.play(); }
+    function playNotice() { noticeSound.play(); }
 }

@@ -6,16 +6,17 @@ import "qrc:/qmlutils" as PegasusUtils
 Rectangle {
     id: collectionInfo
     width: parent.width
-    height: parent.height * 0.33
+    height: metrics ? metrics.collectionInfoHeight : parent.height * 0.33
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
     color: "transparent"
-    anchors.topMargin: 25
+    anchors.topMargin: metrics ? metrics.collectionInfoTopMargin : 25
     visible: true
     property string currentShortName: ""
     property string collectionSystemInfo: ""
     property string collectionDescription: ""
     property int textWidth: 0
+    property var metrics: null
 
     FontLoader {
         id: gruppoFont
@@ -29,7 +30,7 @@ Rectangle {
 
     Item {
         id: container
-        width: parent.width * 0.90
+        width: metrics ? metrics.collectionInfoWidth : parent.width * 0.90
         height: parent.height
         anchors.centerIn: parent
 
@@ -42,7 +43,7 @@ Rectangle {
             color: "white"
             font {
                 family: mitrFont.name
-                pixelSize: Math.max(14, width * 0.023)
+                pixelSize: metrics ? metrics.collectionInfoFontSize : Math.max(14, width * 0.023)
             }
             horizontalAlignment: Text.AlignHCenter
             opacity: 0
@@ -109,7 +110,7 @@ Rectangle {
 
                         font {
                             family: gruppoFont.name
-                            pixelSize: systemInfoText.font.pixelSize
+                            pixelSize: metrics ? metrics.collectionInfoDescriptionFontSize : systemInfoText.font.pixelSize
                         }
 
                         wrapMode: Text.WordWrap

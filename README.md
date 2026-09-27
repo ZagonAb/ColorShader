@@ -5,9 +5,6 @@
 ![screen](https://github.com/ZagonAb/ColorShader/blob/bc38c1d93ab229e601cf7892da19f74fccb8942e/.meta/screenshots/screen.png)
 ![screen1](https://github.com/ZagonAb/ColorShader/blob/bc38c1d93ab229e601cf7892da19f74fccb8942e/.meta/screenshots/screen1.png)
 
-### Key Features  
-- **Screensaver mode:** Rotates screenshots with system logos after inactivity.
-- **Filtering:** Filters game collections by Favorites or Continue Playing.
 
 # RetroArch sounds and resources:
 

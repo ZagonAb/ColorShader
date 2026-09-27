@@ -7,14 +7,15 @@ Item {
     property string currentShortName: ""
     property real themeContainerOpacity: 1.0
     property bool animate: true
+    property var metrics: null
 
-    width: parent ? parent.width * 0.35 : 200
-    height: parent ? parent.height * 0.15 : 80
+    width: metrics ? metrics.systemLogoWidth : (parent ? parent.width * 0.35 : 200)
+    height: metrics ? metrics.systemLogoHeight : (parent ? parent.height * 0.15 : 80)
 
     anchors {
         horizontalCenter: parent.horizontalCenter
         top: parent.top
-        topMargin: parent ? parent.height * 0.05 : 50
+        topMargin: metrics ? metrics.systemLogoTopMargin : (parent ? parent.height * 0.05 : 50)
     }
 
     visible: true
