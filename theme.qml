@@ -1947,6 +1947,22 @@ FocusScope {
         }
     }
 
+    Text {
+        id: versionLabel
+        text: "v" + root.currentVersion
+        color: Qt.rgba(1, 1, 1, 0.15)
+        font.family: global.fonts.condensed
+        font.pixelSize: metrics.px(22)
+        z: 10
+
+        anchors {
+            left: parent.left
+            bottom: parent.bottom
+            leftMargin: metrics.px(14)
+            bottomMargin: metrics.px(10)
+        }
+    }
+
     UpdateNotification {
         id: updateNotification
         metrics: metrics
