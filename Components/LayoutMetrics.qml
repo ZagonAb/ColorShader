@@ -643,26 +643,26 @@ QtObject {
 
     readonly property real updateCardWidth: {
         switch (profile) {
-            case "wide": return viewportWidth * 0.34;
-            case "standard": return viewportWidth * 0.46;
+            case "wide": return viewportWidth * 0.56;
+            case "standard": return viewportWidth * 0.66;
             case "square": return viewportWidth * 0.62;
             case "portrait": return viewportWidth * 0.86;
             default: return viewportWidth * 0.34;
         }
     }
 
-    readonly property real updateCardMinWidth: px(340)
+    readonly property real updateCardMinWidth: px(540)
     readonly property real updateCardTopMargin: px(22)
-    readonly property real updateCardPadding: px(22)
+    readonly property real updateCardPadding: px(28)
     readonly property real updateCardRadius: px(16)
     readonly property real updateCardBorderWidth: Math.max(1, px(2))
     readonly property real updateCardSpacing: px(12)
 
     readonly property real updateCardTitleFontSize: {
         switch (profile) {
-            case "wide": return px(24);
-            case "standard": return px(26);
-            case "square": return px(32);
+            case "wide": return px(42);
+            case "standard": return px(44);
+            case "square": return px(62);
             case "portrait": return px(36);
             default: return px(24);
         }
@@ -670,19 +670,19 @@ QtObject {
 
     readonly property real updateCardBodyFontSize: {
         switch (profile) {
-            case "wide": return px(18);
-            case "standard": return px(19);
-            case "square": return px(24);
-            case "portrait": return px(28);
+            case "wide": return px(26);
+            case "standard": return px(34);
+            case "square": return px(36);
+            case "portrait": return px(34);
             default: return px(18);
         }
     }
 
     readonly property real updateCardNotesFontSize: {
         switch (profile) {
-            case "wide": return px(15);
-            case "standard": return px(16);
-            case "square": return px(20);
+            case "wide": return px(24);
+            case "standard": return px(32);
+            case "square": return px(46);
             case "portrait": return px(23);
             default: return px(15);
         }
@@ -690,9 +690,9 @@ QtObject {
 
     readonly property real updateCardButtonHeight: {
         switch (profile) {
-            case "wide": return px(42);
-            case "standard": return px(46);
-            case "square": return px(56);
+            case "wide": return px(66);
+            case "standard": return px(76);
+            case "square": return px(86);
             case "portrait": return px(62);
             default: return px(42);
         }
@@ -700,16 +700,16 @@ QtObject {
 
     readonly property real updateCardButtonFontSize: {
         switch (profile) {
-            case "wide": return px(15);
-            case "standard": return px(16);
-            case "square": return px(19);
+            case "wide": return px(26);
+            case "standard": return px(28);
+            case "square": return px(32);
             case "portrait": return px(21);
             default: return px(15);
         }
     }
 
     readonly property real updateCardButtonSpacing: px(10)
-    readonly property real updateCardButtonMinWidth: px(110)
+    readonly property real updateCardButtonMinWidth: px(180)
 
     readonly property int updateCardSlideDuration: {
         switch (profile) {

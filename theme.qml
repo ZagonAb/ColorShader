@@ -23,6 +23,7 @@ FocusScope {
     property bool gamesGridFocused: false
     property bool debugOverlayEnabled: false
     property bool debugLogsEnabled: false
+    property bool debugUpdateNotificationEnabled: false
     property alias proxyModel: proxyModel
     property string currentScreenshot: ""
     property string currentShortName: ""
@@ -33,7 +34,7 @@ FocusScope {
     property var currentgame: null
     property var colorMap: ({})
 
-    readonly property string currentVersion: "1.0.0"
+    readonly property string currentVersion: "1.0.1"
     property string _pendingVersion: ""
     property string _pendingUrl: ""
     property string _pendingNotes: ""
@@ -52,7 +53,25 @@ FocusScope {
         return false;
     }
 
+    function showTestUpdateNotification() {
+        console.log("[THEME][checkForUpdates] debugUpdateNotificationEnabled=true -> mostrando notificación de prueba");
+        root._pendingVersion = "9.9.9";
+        root._pendingUrl = "https://github.com/ZagonAb/ColorShader/releases";
+        root._pendingNotes =
+            "Notas de prueba para ajustar LayoutMetrics según el aspect ratio.\n\n" +
+            "- Punto de ejemplo uno\n" +
+            "- Punto de ejemplo dos\n" +
+            "- Texto más largo para comprobar el wrap y el scroll de las notas " +
+            "cuando el contenido no entra en la altura máxima de la tarjeta.";
+        updateNotifyTimer.restart();
+    }
+
     function checkForUpdates() {
+        if (root.debugUpdateNotificationEnabled) {
+            root.showTestUpdateNotification();
+            return;
+        }
+
         var xhr = new XMLHttpRequest();
         var url = "https://api.github.com/repos/ZagonAb/ColorShader/releases/latest";
         xhr.open("GET", url, true);
